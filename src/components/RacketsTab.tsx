@@ -57,11 +57,12 @@ export function RacketsTab({
                   <span className="racket-card__owned">x{owned}</span>
                 </div>
                 <p className="racket-card__flavor">{racket.flavor}</p>
-                {owned > 0 && (
-                  <p className="racket-card__income">
-                    {formatCash(income)}/s
-                  </p>
-                )}
+                <p
+                  className="racket-card__income"
+                  style={{ visibility: owned > 0 ? "visible" : "hidden" }}
+                >
+                  {formatCash(income)}/s
+                </p>
               </div>
               <div className="racket-card__actions">
                 <button
@@ -72,14 +73,14 @@ export function RacketsTab({
                   <span className="buy-btn__label">Buy</span>
                   <span className="buy-btn__cost">{formatCash(cost)}</span>
                 </button>
-                {maxCount > 1 && (
-                  <button
-                    className="buy-btn buy-btn--max"
-                    onClick={() => onBuyMax(racket)}
-                  >
-                    Max (x{formatNumber(maxCount)})
-                  </button>
-                )}
+                <button
+                  className="buy-btn buy-btn--max"
+                  style={{ visibility: maxCount > 1 ? "visible" : "hidden" }}
+                  tabIndex={maxCount > 1 ? 0 : -1}
+                  onClick={() => onBuyMax(racket)}
+                >
+                  Max (x{formatNumber(maxCount)})
+                </button>
               </div>
             </div>
           );

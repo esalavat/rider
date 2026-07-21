@@ -15,6 +15,7 @@ import { loadGame, resetGame as clearSave, saveGame } from "./save";
 import type { GameState, LegacyUpgradeDef, RacketDef } from "./types";
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
+const TICK_INTERVAL_SECONDS = 0.25;
 
 export interface OfflineReport {
   earned: number;
@@ -52,13 +53,17 @@ export function useGameState() {
   useEffect(() => {
     let frame: number;
     let lastTime = performance.now();
+    let accumulated = 0;
     const loop = (now: number) => {
       const dt = Math.min((now - lastTime) / 1000, 0.5);
       lastTime = now;
-      if (dt > 0) {
+      accumulated += dt;
+      if (accumulated >= TICK_INTERVAL_SECONDS) {
+        const elapsed = accumulated;
+        accumulated = 0;
         const income = totalIncomePerSecond(stateRef.current);
         if (income > 0) {
-          setState((prev) => applyIncome(prev, income * dt));
+          setState((prev) => applyIncome(prev, income * elapsed));
         }
       }
       frame = requestAnimationFrame(loop);

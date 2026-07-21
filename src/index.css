@@ -171,6 +171,7 @@ input {
   align-items: flex-start;
   gap: 0;
   border-color: var(--rust);
+  min-width: 108px;
 }
 
 .stat-pill__value {
@@ -178,6 +179,7 @@ input {
   font-size: 18px;
   line-height: 1.1;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-pill--cash .stat-pill__value {
@@ -188,6 +190,11 @@ input {
 .stat-pill__label {
   font-size: 10px;
   color: var(--success);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-pill:not(.stat-pill--cash) {
+  min-width: 56px;
 }
 
 .stat-pill--legend {
@@ -317,6 +324,9 @@ input {
   font-size: 12px;
   color: var(--chrome-dim);
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5ch;
+  text-align: right;
 }
 
 .racket-card__flavor {
@@ -329,6 +339,7 @@ input {
   margin: 0;
   font-size: 12px;
   color: var(--success);
+  font-variant-numeric: tabular-nums;
 }
 
 .racket-card__actions {
@@ -351,6 +362,10 @@ input {
   font-weight: 600;
   box-shadow: var(--shadow-hard-sm);
   transition: transform 0.08s ease;
+}
+
+.buy-btn__cost {
+  font-variant-numeric: tabular-nums;
 }
 
 .buy-btn:active:not(:disabled) {
@@ -429,6 +444,7 @@ input {
   font-family: var(--font-display);
   font-size: 26px;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .recruit-card__rank {
@@ -557,6 +573,7 @@ input {
 .legacy-card__level {
   font-size: 11px;
   color: var(--chrome-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .legacy-card__flavor {
