@@ -30,6 +30,10 @@ export function loadGame(): GameState {
       legacyLevels: { ...fresh.legacyLevels, ...(parsed.legacyLevels ?? {}) },
       memberTiers: { ...fresh.memberTiers, ...migratedMemberTiers },
       memberProgress: { ...fresh.memberProgress, ...(parsed.memberProgress ?? {}) },
+      unlockedChapters: {
+        ...fresh.unlockedChapters,
+        ...(parsed.unlockedChapters ?? {}),
+      },
     };
   } catch {
     return createNewGame();

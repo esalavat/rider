@@ -1,5 +1,5 @@
 import type React from "react";
-import type { RacketIconId } from "../game/types";
+import type { ChapterPatchId, RacketIconId } from "../game/types";
 
 type IconProps = { className?: string };
 
@@ -162,6 +162,107 @@ export function ThrottleIcon({ className }: IconProps) {
       <path d="M20 34h6l4-14h8" />
       <path d="M18 20h10l4-8" />
       <path d="M14 28V16h6" />
+    </svg>
+  );
+}
+
+export function MapPinIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} {...base}>
+      <path d="M24 8a12 12 0 00-12 12c0 8 12 20 12 20s12-12 12-20A12 12 0 0024 8z" />
+      <circle cx="24" cy="20" r="4" />
+    </svg>
+  );
+}
+
+const PATCH_OUTLINE =
+  "M24 4l6 6h8v8l6 6-6 6v8h-8l-6 6-6-6h-8v-8l-6-6 6-6v-8h8z";
+
+function ChapterPatchGlyph({ patch }: { patch: ChapterPatchId }) {
+  switch (patch) {
+    case "gear":
+      return (
+        <>
+          <circle cx="24" cy="24" r="6" />
+          <line x1="24" y1="18" x2="24" y2="15" />
+          <line x1="24" y1="30" x2="24" y2="33" />
+          <line x1="30" y1="24" x2="33" y2="24" />
+          <line x1="18" y1="24" x2="15" y2="24" />
+          <line x1="28.2" y1="19.8" x2="30.4" y2="17.6" />
+          <line x1="19.8" y1="19.8" x2="17.6" y2="17.6" />
+          <line x1="28.2" y1="28.2" x2="30.4" y2="30.4" />
+          <line x1="19.8" y1="28.2" x2="17.6" y2="30.4" />
+        </>
+      );
+    case "sun":
+      return (
+        <>
+          <circle cx="24" cy="24" r="5" />
+          <g strokeWidth={1.5}>
+            <line x1="24" y1="17" x2="24" y2="13" />
+            <line x1="24" y1="31" x2="24" y2="35" />
+            <line x1="31" y1="24" x2="35" y2="24" />
+            <line x1="17" y1="24" x2="13" y2="24" />
+            <line x1="28.95" y1="19.05" x2="31.78" y2="16.22" />
+            <line x1="19.05" y1="19.05" x2="16.22" y2="16.22" />
+            <line x1="28.95" y1="28.95" x2="31.78" y2="31.78" />
+            <line x1="19.05" y1="28.95" x2="16.22" y2="31.78" />
+          </g>
+        </>
+      );
+    case "pine":
+      return (
+        <>
+          <path d="M24 12L30 22H18Z" />
+          <path d="M24 18L32 30H16Z" />
+          <line x1="24" y1="30" x2="24" y2="35" />
+        </>
+      );
+    case "moon":
+      return (
+        <>
+          <path d="M29 12c-5 0-9 4-9 9s4 9 9 9c-3-2.5-5-5.5-5-9s2-6.5 5-9z" />
+          <path d="M15 32c3-2.5 6-2.5 9 0s6 2.5 9 0" />
+        </>
+      );
+    case "mesa":
+      return (
+        <path d="M10 34h28M14 28h20M14 28v6M34 28v6M18 22h12M18 22v6M30 22v6" />
+      );
+    case "anchor":
+      return (
+        <>
+          <circle cx="24" cy="16" r="2.5" />
+          <line x1="24" y1="18" x2="24" y2="31" />
+          <line x1="19" y1="22" x2="29" y2="22" />
+          <path d="M16 26a8 8 0 0016 0" />
+        </>
+      );
+    case "flame":
+      return (
+        <path d="M24 14c5 6 8 10 8 14a8 8 0 01-16 0c0-2 1-4 2-6c1 3 2 4 3 4c-1-5 0-9 3-12z" />
+      );
+    case "wings":
+      return (
+        <>
+          <path d="M24 30C18 26 14 22 11 15" />
+          <path d="M24 30C30 26 34 22 37 15" />
+        </>
+      );
+  }
+}
+
+export function ChapterPatchIcon({
+  patch,
+  className,
+}: {
+  patch: ChapterPatchId;
+  className?: string;
+}) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} {...base}>
+      <path d={PATCH_OUTLINE} />
+      <ChapterPatchGlyph patch={patch} />
     </svg>
   );
 }

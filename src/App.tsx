@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChaptersTab } from "./components/ChaptersTab";
 import { Header } from "./components/Header";
 import { LegacyTab } from "./components/LegacyTab";
 import { RacketsTab } from "./components/RacketsTab";
@@ -19,6 +20,7 @@ export default function App() {
     buyMaxMemberTier,
     buyLegacyUpgrade,
     doPrestige,
+    unlockChapter,
     kickstart,
     renameClub,
   } = useGameState();
@@ -45,6 +47,9 @@ export default function App() {
             onBuy={buyMemberTier}
             onBuyMax={buyMaxMemberTier}
           />
+        )}
+        {tab === "chapters" && (
+          <ChaptersTab state={state} onUnlock={unlockChapter} />
         )}
         {tab === "legacy" && (
           <LegacyTab

@@ -13,9 +13,16 @@ import {
   clickBonus,
   prestige as prestigeAction,
   totalIncomePerSecond,
+  unlockChapter as unlockChapterAction,
 } from "./engine";
 import { loadGame, resetGame as clearSave, saveGame } from "./save";
-import type { GameState, LegacyUpgradeDef, MemberTierDef, RacketDef } from "./types";
+import type {
+  ChapterDef,
+  GameState,
+  LegacyUpgradeDef,
+  MemberTierDef,
+  RacketDef,
+} from "./types";
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
 const TICK_INTERVAL_SECONDS = 0.25;
@@ -121,6 +128,10 @@ export function useGameState() {
     setState((prev) => prestigeAction(prev));
   }, []);
 
+  const unlockChapter = useCallback((chapter: ChapterDef) => {
+    setState((prev) => unlockChapterAction(prev, chapter));
+  }, []);
+
   const kickstart = useCallback(() => {
     setState((prev) => applyIncome(prev, clickBonus(prev)));
   }, []);
@@ -147,6 +158,7 @@ export function useGameState() {
     buyMaxMemberTier,
     buyLegacyUpgrade,
     doPrestige,
+    unlockChapter,
     kickstart,
     renameClub,
     hardReset,

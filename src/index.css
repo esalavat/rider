@@ -607,6 +607,122 @@ input {
   color: var(--gold);
 }
 
+/* Chapters */
+
+.chapters-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  background: var(--bg-panel);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: var(--shadow-hard);
+  padding: 18px 16px;
+}
+
+.chapters-hero__icon {
+  width: 36px;
+  height: 36px;
+  color: var(--rust);
+  margin-bottom: 4px;
+}
+
+.chapters-hero__count {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.chapters-hero__bonus {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.chapter-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  background: var(--bg-panel);
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: var(--shadow-hard-sm);
+  padding: 12px 10px;
+  opacity: 0.75;
+}
+
+.chapter-card--unlocked {
+  opacity: 1;
+  border-color: var(--chapter-accent, var(--gold));
+}
+
+.chapter-card__patch {
+  width: 44px;
+  height: 44px;
+  color: var(--chrome-dim);
+}
+
+.chapter-card--unlocked .chapter-card__patch {
+  color: var(--chapter-accent, var(--gold));
+}
+
+.chapter-card__name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text);
+  letter-spacing: 0.5px;
+}
+
+.chapter-card__region {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+}
+
+.chapter-card__flavor {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.chapter-card__bike {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--chrome);
+}
+
+.chapter-card__bike-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.chapter-card__bonus {
+  font-size: 12px;
+  color: var(--success);
+  font-variant-numeric: tabular-nums;
+}
+
+.chapter-card__unlock {
+  margin-top: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
 /* Tab nav */
 
 .tab-nav {

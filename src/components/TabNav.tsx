@@ -1,11 +1,12 @@
 import type React from "react";
-import { PatchIcon, SkullIcon, WrenchIcon } from "./icons";
+import { MapPinIcon, PatchIcon, SkullIcon, WrenchIcon } from "./icons";
 
-export type TabId = "rackets" | "recruits" | "legacy";
+export type TabId = "rackets" | "recruits" | "chapters" | "legacy";
 
 const TABS: { id: TabId; label: string; icon: (p: { className?: string }) => React.JSX.Element }[] = [
   { id: "rackets", label: "Rackets", icon: WrenchIcon },
   { id: "recruits", label: "Recruits", icon: PatchIcon },
+  { id: "chapters", label: "Chapters", icon: MapPinIcon },
   { id: "legacy", label: "Legacy", icon: SkullIcon },
 ];
 

@@ -1,4 +1,5 @@
 import {
+  CHAPTERS,
   CLICK_BONUS_FLOOR,
   CLICK_BONUS_INCOME_SHARE,
   LEGACY_UPGRADES,
@@ -10,10 +11,10 @@ import {
   RACKET_MILESTONES,
   RACKETS,
 } from "./data";
-import type { GameState, LegacyUpgradeDef, MemberTierDef, RacketDef } from "./types";
+import type { ChapterDef, GameState, LegacyUpgradeDef, MemberTierDef, RacketDef } from "./types";
 
 export const SAVE_KEY = "rider-mc-save-v1";
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export function createNewGame(): GameState {
   const now = Date.now();
@@ -29,6 +30,7 @@ export function createNewGame(): GameState {
     legacyLevels: Object.fromEntries(LEGACY_UPGRADES.map((u) => [u.id, 0])),
     memberTiers: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
     memberProgress: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
+    unlockedChapters: Object.fromEntries(CHAPTERS.map((c) => [c.id, false])),
     createdAt: now,
     lastSave: now,
   };
@@ -176,8 +178,37 @@ export function legacyIncomeMultiplier(state: GameState): number {
   return multiplier;
 }
 
+export function chapterUnlocked(state: GameState, chapter: ChapterDef): boolean {
+  return !!state.unlockedChapters[chapter.id];
+}
+
+export function canUnlockChapter(state: GameState, chapter: ChapterDef): boolean {
+  return !chapterUnlocked(state, chapter) && state.legendPoints >= chapter.unlockCost;
+}
+
+export function unlockChapter(state: GameState, chapter: ChapterDef): GameState {
+  if (!canUnlockChapter(state, chapter)) return state;
+  return {
+    ...state,
+    legendPoints: state.legendPoints - chapter.unlockCost,
+    unlockedChapters: { ...state.unlockedChapters, [chapter.id]: true },
+  };
+}
+
+export function chapterBonusMultiplier(state: GameState): number {
+  return (
+    1 +
+    CHAPTERS.reduce(
+      (sum, chapter) => sum + (chapterUnlocked(state, chapter) ? chapter.bonus : 0),
+      0
+    )
+  );
+}
+
 export function globalMultiplier(state: GameState): number {
-  return memberMultiplier(state) * legacyIncomeMultiplier(state);
+  return (
+    memberMultiplier(state) * legacyIncomeMultiplier(state) * chapterBonusMultiplier(state)
+  );
 }
 
 export function totalIncomePerSecond(state: GameState): number {

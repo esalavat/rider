@@ -45,6 +45,28 @@ export interface LegacyUpgradeDef {
   maxLevel: number;
 }
 
+export type ChapterPatchId =
+  | "gear"
+  | "sun"
+  | "pine"
+  | "moon"
+  | "mesa"
+  | "anchor"
+  | "flame"
+  | "wings";
+
+export interface ChapterDef {
+  id: string;
+  name: string;
+  region: string;
+  flavor: string;
+  bikeName: string;
+  unlockCost: number;
+  bonus: number;
+  accent: string;
+  patch: ChapterPatchId;
+}
+
 export interface GameState {
   version: number;
   clubName: string;
@@ -57,6 +79,7 @@ export interface GameState {
   legacyLevels: Record<string, number>;
   memberTiers: Record<string, number>;
   memberProgress: Record<string, number>;
+  unlockedChapters: Record<string, boolean>;
   createdAt: number;
   lastSave: number;
 }
