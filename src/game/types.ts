@@ -21,6 +21,19 @@ export type RacketIconId =
 
 export type LegacyEffect = "income" | "recruitCost" | "startCash";
 
+export type MemberTierIconId = "patch" | "officer";
+
+export interface MemberTierDef {
+  id: string;
+  name: string;
+  flavor: string;
+  icon: MemberTierIconId;
+  baseCost: number;
+  costGrowth: number;
+  weight: number;
+  requires?: string;
+}
+
 export interface LegacyUpgradeDef {
   id: string;
   name: string;
@@ -37,11 +50,12 @@ export interface GameState {
   clubName: string;
   cash: number;
   cashEarnedThisRun: number;
-  members: number;
   legendPoints: number;
   prestigeCount: number;
   rackets: Record<string, number>;
   legacyLevels: Record<string, number>;
+  memberTiers: Record<string, number>;
+  memberProgress: Record<string, number>;
   createdAt: number;
   lastSave: number;
 }

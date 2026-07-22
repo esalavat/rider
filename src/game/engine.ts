@@ -2,15 +2,15 @@ import {
   CLICK_BONUS_FLOOR,
   CLICK_BONUS_INCOME_SHARE,
   LEGACY_UPGRADES,
-  MEMBER_BASE_COST,
-  MEMBER_COST_GROWTH,
+  MEMBER_AUTO_RATE,
   MEMBER_INCOME_BONUS,
+  MEMBER_TIERS,
   RACKETS,
 } from "./data";
-import type { GameState, LegacyUpgradeDef, RacketDef } from "./types";
+import type { GameState, LegacyUpgradeDef, MemberTierDef, RacketDef } from "./types";
 
 export const SAVE_KEY = "rider-mc-save-v1";
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export function createNewGame(): GameState {
   const now = Date.now();
@@ -19,11 +19,12 @@ export function createNewGame(): GameState {
     clubName: "Iron Vultures MC",
     cash: 0,
     cashEarnedThisRun: 0,
-    members: 0,
     legendPoints: 0,
     prestigeCount: 0,
     rackets: Object.fromEntries(RACKETS.map((r) => [r.id, 0])),
     legacyLevels: Object.fromEntries(LEGACY_UPGRADES.map((u) => [u.id, 0])),
+    memberTiers: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
+    memberProgress: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
     createdAt: now,
     lastSave: now,
   };
@@ -57,19 +58,58 @@ export function legacyUpgradeCost(
   return Math.ceil(upgrade.baseCost * Math.pow(upgrade.costGrowth, level));
 }
 
-export function memberCost(state: GameState): number {
+function recruitCostDiscount(state: GameState): number {
   const reputationLevel = legacyLevel(
     state,
     LEGACY_UPGRADES.find((u) => u.id === "reputation")!
   );
-  const discount = Math.max(0.2, 1 - reputationLevel * 0.03);
+  return Math.max(0.2, 1 - reputationLevel * 0.03);
+}
+
+export function memberTierOwned(state: GameState, tier: MemberTierDef): number {
+  return state.memberTiers[tier.id] ?? 0;
+}
+
+export function memberTierIsUnlocked(
+  state: GameState,
+  tier: MemberTierDef
+): boolean {
+  if (!tier.requires) return true;
+  return (state.memberTiers[tier.requires] ?? 0) > 0;
+}
+
+export function memberTierCost(
+  state: GameState,
+  tier: MemberTierDef,
+  ownedOverride?: number
+): number {
+  const owned = ownedOverride ?? memberTierOwned(state, tier);
   return Math.ceil(
-    MEMBER_BASE_COST * Math.pow(MEMBER_COST_GROWTH, state.members) * discount
+    tier.baseCost * Math.pow(tier.costGrowth, owned) * recruitCostDiscount(state)
+  );
+}
+
+export function totalMembers(state: GameState): number {
+  return MEMBER_TIERS.reduce((sum, t) => sum + memberTierOwned(state, t), 0);
+}
+
+export function effectiveMemberWeight(state: GameState): number {
+  return MEMBER_TIERS.reduce(
+    (sum, t) => sum + memberTierOwned(state, t) * t.weight,
+    0
   );
 }
 
 export function memberMultiplier(state: GameState): number {
-  return 1 + state.members * MEMBER_INCOME_BONUS;
+  return 1 + effectiveMemberWeight(state) * MEMBER_INCOME_BONUS;
+}
+
+export function memberRank(state: GameState): string {
+  let rank = "Hangaround";
+  for (const tier of MEMBER_TIERS) {
+    if (memberTierOwned(state, tier) > 0) rank = tier.name;
+  }
+  return rank;
 }
 
 export function legacyIncomeMultiplier(state: GameState): number {
@@ -152,14 +192,73 @@ export function buyMaxRackets(state: GameState, racket: RacketDef): GameState {
   };
 }
 
-export function recruitMember(state: GameState): GameState {
-  const cost = memberCost(state);
+export function buyMemberTier(state: GameState, tier: MemberTierDef): GameState {
+  const owned = memberTierOwned(state, tier);
+  const cost = memberTierCost(state, tier, owned);
   if (state.cash < cost) return state;
   return {
     ...state,
     cash: state.cash - cost,
-    members: state.members + 1,
+    memberTiers: { ...state.memberTiers, [tier.id]: owned + 1 },
   };
+}
+
+export function maxAffordableMemberTier(
+  state: GameState,
+  tier: MemberTierDef
+): number {
+  let owned = memberTierOwned(state, tier);
+  let cash = state.cash;
+  let count = 0;
+  while (count < 1000) {
+    const cost = memberTierCost(state, tier, owned);
+    if (cash < cost) break;
+    cash -= cost;
+    owned += 1;
+    count += 1;
+  }
+  return count;
+}
+
+export function buyMaxMemberTier(
+  state: GameState,
+  tier: MemberTierDef
+): GameState {
+  const count = maxAffordableMemberTier(state, tier);
+  if (count === 0) return state;
+  let cash = state.cash;
+  let owned = memberTierOwned(state, tier);
+  for (let i = 0; i < count; i++) {
+    cash -= memberTierCost(state, tier, owned);
+    owned += 1;
+  }
+  return {
+    ...state,
+    cash,
+    memberTiers: { ...state.memberTiers, [tier.id]: owned },
+  };
+}
+
+export function applyMemberAutoProduction(
+  state: GameState,
+  dtSeconds: number
+): GameState {
+  const nextTiers = { ...state.memberTiers };
+  const nextProgress = { ...state.memberProgress };
+  for (let i = MEMBER_TIERS.length - 1; i >= 1; i--) {
+    const producer = MEMBER_TIERS[i];
+    const target = MEMBER_TIERS[i - 1];
+    const producerOwned = nextTiers[producer.id] ?? 0;
+    if (producerOwned <= 0) continue;
+    const progress =
+      (nextProgress[target.id] ?? 0) + producerOwned * MEMBER_AUTO_RATE * dtSeconds;
+    const wholeUnits = Math.floor(progress);
+    if (wholeUnits > 0) {
+      nextTiers[target.id] = (nextTiers[target.id] ?? 0) + wholeUnits;
+    }
+    nextProgress[target.id] = progress - wholeUnits;
+  }
+  return { ...state, memberTiers: nextTiers, memberProgress: nextProgress };
 }
 
 export function buyLegacyUpgrade(
@@ -198,10 +297,11 @@ export function prestige(state: GameState): GameState {
     ...state,
     cash: 0,
     cashEarnedThisRun: 0,
-    members: 0,
     legendPoints: state.legendPoints + earned,
     prestigeCount: state.prestigeCount + 1,
     rackets: Object.fromEntries(RACKETS.map((r) => [r.id, 0])),
+    memberTiers: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
+    memberProgress: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
   };
   next.cash = startingCash(next);
   return next;
@@ -211,8 +311,9 @@ export function applyOfflineProgress(
   state: GameState,
   elapsedSeconds: number
 ): { state: GameState; earned: number } {
-  const income = totalIncomePerSecond(state);
+  const withMembers = applyMemberAutoProduction(state, elapsedSeconds);
+  const income = totalIncomePerSecond(withMembers);
   const earned = income * elapsedSeconds;
-  if (earned <= 0) return { state, earned: 0 };
-  return { state: applyIncome(state, earned), earned };
+  if (earned <= 0) return { state: withMembers, earned: 0 };
+  return { state: applyIncome(withMembers, earned), earned };
 }

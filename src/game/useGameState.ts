@@ -2,17 +2,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { OFFLINE_CAP_SECONDS, OFFLINE_EFFICIENCY } from "./data";
 import {
   applyIncome,
+  applyMemberAutoProduction,
   applyOfflineProgress,
   buyLegacyUpgrade as buyLegacyUpgradeAction,
+  buyMaxMemberTier as buyMaxMemberTierAction,
   buyMaxRackets as buyMaxRacketsAction,
+  buyMemberTier as buyMemberTierAction,
   buyRacket as buyRacketAction,
   clickBonus,
   prestige as prestigeAction,
-  recruitMember as recruitMemberAction,
   totalIncomePerSecond,
 } from "./engine";
 import { loadGame, resetGame as clearSave, saveGame } from "./save";
-import type { GameState, LegacyUpgradeDef, RacketDef } from "./types";
+import type { GameState, LegacyUpgradeDef, MemberTierDef, RacketDef } from "./types";
 
 const AUTOSAVE_INTERVAL_MS = 10_000;
 const TICK_INTERVAL_SECONDS = 0.25;
@@ -61,10 +63,13 @@ export function useGameState() {
       if (accumulated >= TICK_INTERVAL_SECONDS) {
         const elapsed = accumulated;
         accumulated = 0;
-        const income = totalIncomePerSecond(stateRef.current);
-        if (income > 0) {
-          setState((prev) => applyIncome(prev, income * elapsed));
-        }
+        setState((prev) => {
+          const withMembers = applyMemberAutoProduction(prev, elapsed);
+          const income = totalIncomePerSecond(withMembers);
+          return income > 0
+            ? applyIncome(withMembers, income * elapsed)
+            : withMembers;
+        });
       }
       frame = requestAnimationFrame(loop);
     };
@@ -95,8 +100,12 @@ export function useGameState() {
     setState((prev) => buyMaxRacketsAction(prev, racket));
   }, []);
 
-  const recruitMember = useCallback(() => {
-    setState((prev) => recruitMemberAction(prev));
+  const buyMemberTier = useCallback((tier: MemberTierDef) => {
+    setState((prev) => buyMemberTierAction(prev, tier));
+  }, []);
+
+  const buyMaxMemberTier = useCallback((tier: MemberTierDef) => {
+    setState((prev) => buyMaxMemberTierAction(prev, tier));
   }, []);
 
   const buyLegacyUpgrade = useCallback((upgrade: LegacyUpgradeDef) => {
@@ -128,7 +137,8 @@ export function useGameState() {
     dismissOfflineReport,
     buyRacket,
     buyMaxRackets,
-    recruitMember,
+    buyMemberTier,
+    buyMaxMemberTier,
     buyLegacyUpgrade,
     doPrestige,
     kickstart,

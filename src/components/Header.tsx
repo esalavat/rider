@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { formatCash, formatNumber } from "../game/format";
-import { memberRank } from "../game/data";
-import { totalIncomePerSecond } from "../game/engine";
+import { memberRank, totalIncomePerSecond, totalMembers } from "../game/engine";
 import type { GameState } from "../game/types";
 import { PatchIcon, SkullIcon } from "./icons";
 
@@ -51,7 +50,7 @@ export function Header({ state, onRename }: HeaderProps) {
             {state.clubName}
           </button>
         )}
-        <span className="app-header__rank">{memberRank(state.members)}</span>
+        <span className="app-header__rank">{memberRank(state)}</span>
       </div>
 
       <div className="app-header__stats">
@@ -63,7 +62,7 @@ export function Header({ state, onRename }: HeaderProps) {
         </div>
         <div className="stat-pill">
           <PatchIcon className="stat-pill__icon" />
-          <span className="stat-pill__value">{formatNumber(state.members)}</span>
+          <span className="stat-pill__value">{formatNumber(totalMembers(state))}</span>
         </div>
         <div className="stat-pill stat-pill--legend">
           <SkullIcon className="stat-pill__icon" />

@@ -415,51 +415,41 @@ input {
 
 /* Recruits */
 
-.recruit-card {
+.recruit-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
   text-align: center;
   background: var(--bg-panel);
   border: 3px solid var(--ink);
   border-radius: 8px;
   box-shadow: var(--shadow-hard);
-  padding: 24px 16px;
+  padding: 18px 16px;
 }
 
-.recruit-card__icon {
-  width: 56px;
-  height: 56px;
+.recruit-hero__icon {
+  width: 40px;
+  height: 40px;
   color: var(--rust);
+  margin-bottom: 6px;
 }
 
-.recruit-card__stats {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.recruit-card__count {
+.recruit-hero__count {
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 24px;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
-.recruit-card__rank {
+.recruit-hero__rank {
   font-size: 13px;
   color: var(--gold);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
-.recruit-card__next {
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.recruit-card__bonus {
+.recruit-hero__bonus {
   font-size: 12px;
   color: var(--success);
   margin-top: 4px;

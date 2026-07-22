@@ -5,14 +5,27 @@ export function loadGame(): GameState {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return createNewGame();
-    const parsed = JSON.parse(raw) as Partial<GameState>;
-    if (!parsed || parsed.version !== SAVE_VERSION) return createNewGame();
+    const parsed = JSON.parse(raw) as (Partial<GameState> & {
+      members?: number;
+    }) | null;
+    if (!parsed || typeof parsed.version !== "number") return createNewGame();
+    if (parsed.version > SAVE_VERSION) return createNewGame();
+
     const fresh = createNewGame();
+    const migratedMemberTiers =
+      parsed.memberTiers ??
+      (typeof parsed.members === "number"
+        ? { ...fresh.memberTiers, prospect: parsed.members }
+        : fresh.memberTiers);
+
     return {
       ...fresh,
       ...parsed,
+      version: SAVE_VERSION,
       rackets: { ...fresh.rackets, ...(parsed.rackets ?? {}) },
       legacyLevels: { ...fresh.legacyLevels, ...(parsed.legacyLevels ?? {}) },
+      memberTiers: { ...fresh.memberTiers, ...migratedMemberTiers },
+      memberProgress: { ...fresh.memberProgress, ...(parsed.memberProgress ?? {}) },
     };
   } catch {
     return createNewGame();

@@ -1,4 +1,4 @@
-import type { LegacyUpgradeDef, RacketDef } from "./types";
+import type { LegacyUpgradeDef, MemberTierDef, RacketDef } from "./types";
 
 export const RACKETS: RacketDef[] = [
   {
@@ -125,29 +125,81 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
   },
 ];
 
-export const MEMBER_BASE_COST = 50;
-export const MEMBER_COST_GROWTH = 1.13;
 export const MEMBER_INCOME_BONUS = 0.02;
+export const MEMBER_AUTO_RATE = 0.1;
 export const CLICK_BONUS_FLOOR = 10;
 export const CLICK_BONUS_INCOME_SHARE = 0.6;
 export const OFFLINE_CAP_SECONDS = 4 * 60 * 60;
 export const OFFLINE_EFFICIENCY = 0.5;
 
-export const MEMBER_RANKS: { count: number; title: string }[] = [
-  { count: 0, title: "Hangaround" },
-  { count: 10, title: "Prospect" },
-  { count: 25, title: "Patched Member" },
-  { count: 50, title: "Road Captain" },
-  { count: 100, title: "Sergeant at Arms" },
-  { count: 250, title: "Vice President" },
-  { count: 500, title: "Chapter President" },
-  { count: 1000, title: "National President" },
+export const MEMBER_TIERS: MemberTierDef[] = [
+  {
+    id: "prospect",
+    name: "Prospect",
+    flavor: "Washing bikes and earning trust. Everyone starts here.",
+    icon: "patch",
+    baseCost: 50,
+    costGrowth: 1.13,
+    weight: 1,
+  },
+  {
+    id: "patched",
+    name: "Patched Member",
+    flavor: "Earned the colors. Brings in prospects on their own.",
+    icon: "patch",
+    baseCost: 2000,
+    costGrowth: 1.14,
+    weight: 20,
+    requires: "prospect",
+  },
+  {
+    id: "road_captain",
+    name: "Road Captain",
+    flavor: "Runs the recruiting routes, chapter to chapter.",
+    icon: "officer",
+    baseCost: 100000,
+    costGrowth: 1.15,
+    weight: 400,
+    requires: "patched",
+  },
+  {
+    id: "sergeant",
+    name: "Sergeant at Arms",
+    flavor: "Keeps the peace, keeps the ranks growing.",
+    icon: "officer",
+    baseCost: 6000000,
+    costGrowth: 1.16,
+    weight: 8000,
+    requires: "road_captain",
+  },
+  {
+    id: "vice_president",
+    name: "Vice President",
+    flavor: "Second in command, building the bench.",
+    icon: "officer",
+    baseCost: 400000000,
+    costGrowth: 1.17,
+    weight: 160000,
+    requires: "sergeant",
+  },
+  {
+    id: "chapter_president",
+    name: "Chapter President",
+    flavor: "Runs the chapter. Every rider answers to them.",
+    icon: "officer",
+    baseCost: 32000000000,
+    costGrowth: 1.18,
+    weight: 3200000,
+    requires: "vice_president",
+  },
+  {
+    id: "national_president",
+    name: "National President",
+    flavor: "The name on every chapter's charter.",
+    icon: "officer",
+    baseCost: 3000000000000,
+    costGrowth: 1.19,
+    weight: 64000000,
+    requires: "chapter_president",
+  },
 ];
-
-export function memberRank(members: number): string {
-  let title = MEMBER_RANKS[0].title;
-  for (const rank of MEMBER_RANKS) {
-    if (members >= rank.count) title = rank.title;
-  }
-  return title;
-}

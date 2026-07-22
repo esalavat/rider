@@ -14,7 +14,8 @@ export default function App() {
     dismissOfflineReport,
     buyRacket,
     buyMaxRackets,
-    recruitMember,
+    buyMemberTier,
+    buyMaxMemberTier,
     buyLegacyUpgrade,
     doPrestige,
     kickstart,
@@ -37,7 +38,11 @@ export default function App() {
           />
         )}
         {tab === "recruits" && (
-          <RecruitsTab state={state} onRecruit={recruitMember} />
+          <RecruitsTab
+            state={state}
+            onBuy={buyMemberTier}
+            onBuyMax={buyMaxMemberTier}
+          />
         )}
         {tab === "legacy" && (
           <LegacyTab

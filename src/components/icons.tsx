@@ -137,6 +137,15 @@ export function PatchIcon({ className }: IconProps) {
   );
 }
 
+export function OfficerPatchIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} {...base}>
+      <path d="M24 4l6 6h8v8l6 6-6 6v8h-8l-6 6-6-6h-8v-8l-6-6 6-6v-8h8z" />
+      <path d="M24 18l2.5 5.2 5.7.6-4.2 4 1.1 5.7-5.1-2.8-5.1 2.8 1.1-5.7-4.2-4 5.7-.6z" />
+    </svg>
+  );
+}
+
 export function WrenchIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 48 48" className={className} {...base}>
