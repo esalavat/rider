@@ -1,18 +1,35 @@
 import { useState, type CSSProperties } from "react";
-import { CHAPTERS, CHAPTER_MAP_VIEWBOX, MEMBER_TIERS } from "../game/data";
+import { CHAPTER_MAP_HOME, CHAPTERS, CHAPTER_MAP_VIEWBOX, MEMBER_TIERS } from "../game/data";
 import { formatNumber } from "../game/format";
 import { canUnlockChapter, chapterUnlocked } from "../game/engine";
 import type { ChapterDef, GameState } from "../game/types";
-import { ChapterPatchIcon, LockIcon, MapPinIcon, SkullIcon, ThrottleIcon } from "./icons";
+import {
+  ChapterPatchIcon,
+  LockIcon,
+  MapPinIcon,
+  ScrapyardIcon,
+  SkullIcon,
+  ThrottleIcon,
+} from "./icons";
 
 interface ChaptersTabProps {
   state: GameState;
   onUnlock: (chapter: ChapterDef) => void;
 }
 
+function roadPath(
+  from: { mapX: number; mapY: number },
+  to: { mapX: number; mapY: number }
+): string {
+  return `M ${from.mapX} ${from.mapY} C ${from.mapX} ${from.mapY + 55}, ${to.mapX} ${
+    to.mapY - 55
+  }, ${to.mapX} ${to.mapY}`;
+}
+
 export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const unlockedCount = CHAPTERS.filter((c) => chapterUnlocked(state, c)).length;
+  const isHomeSelected = selectedId === "home";
 
   const frontierChapter =
     CHAPTERS.find((c) => !chapterUnlocked(state, c)) ?? CHAPTERS[CHAPTERS.length - 1];
@@ -47,24 +64,33 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
         >
           <path
             className="chapter-map__landmass"
-            d="M40 30 C130 -10,250 5,290 55 C330 105,290 170,310 240
-               C330 320,275 370,295 450 C315 540,265 590,285 670
-               C305 760,250 820,265 900 C275 945,190 945,150 925
-               C90 895,110 830,75 780 C35 725,55 660,30 590
-               C5 520,45 460,25 390 C5 320,45 260,25 190
-               C8 130,45 75,40 30 Z"
+            d="M40 34 C130 -11,250 6,290 63 C330 119,290 193,310 273
+               C330 364,275 421,295 512 C315 614,265 671,285 762
+               C305 864,250 932,265 1023 C275 1074,190 1074,150 1052
+               C90 1017,110 944,75 887 C35 824,55 750,30 671
+               C5 591,45 523,25 443 C5 364,45 296,25 216
+               C8 148,45 85,40 34 Z"
+          />
+
+          <path
+            d={roadPath(CHAPTER_MAP_HOME, CHAPTERS[0])}
+            className={`chapter-map__road${
+              chapterUnlocked(state, CHAPTERS[0]) ? " chapter-map__road--active" : ""
+            }`}
+            style={
+              chapterUnlocked(state, CHAPTERS[0])
+                ? ({ "--chapter-accent": "var(--chrome)" } as CSSProperties)
+                : undefined
+            }
           />
 
           {CHAPTERS.slice(0, -1).map((chapter, i) => {
             const next = CHAPTERS[i + 1];
             const active = chapterUnlocked(state, next);
-            const d = `M ${chapter.mapX} ${chapter.mapY} C ${chapter.mapX} ${
-              chapter.mapY + 55
-            }, ${next.mapX} ${next.mapY - 55}, ${next.mapX} ${next.mapY}`;
             return (
               <path
                 key={`${chapter.id}-road`}
-                d={d}
+                d={roadPath(chapter, next)}
                 className={`chapter-map__road${active ? " chapter-map__road--active" : ""}`}
                 style={
                   active
@@ -74,6 +100,23 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
               />
             );
           })}
+
+          <g
+            className={`chapter-map__city chapter-map__city--unlocked${
+              isHomeSelected ? " chapter-map__city--selected" : ""
+            }`}
+            style={{ "--chapter-accent": "var(--chrome)" } as CSSProperties}
+            transform={`translate(${CHAPTER_MAP_HOME.mapX}, ${CHAPTER_MAP_HOME.mapY})`}
+            onClick={() => setSelectedId("home")}
+          >
+            <circle r="26" className="chapter-map__city-bg" />
+            <svg x={-13} y={-13} width={26} height={26} className="chapter-map__city-icon">
+              <ScrapyardIcon />
+            </svg>
+            <text y="42" textAnchor="middle" className="chapter-map__city-label">
+              {CHAPTER_MAP_HOME.name}
+            </text>
+          </g>
 
           {CHAPTERS.map((chapter) => {
             const unlocked = chapterUnlocked(state, chapter);
@@ -105,59 +148,75 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
         </svg>
       </div>
 
-      <div
-        className={`chapter-detail${selectedUnlocked ? " chapter-detail--unlocked" : ""}`}
-        style={
-          selectedUnlocked
-            ? ({ "--chapter-accent": selected.accent } as CSSProperties)
-            : undefined
-        }
-      >
-        <div className="chapter-detail__patch">
-          <ChapterPatchIcon patch={selected.patch} />
+      {isHomeSelected ? (
+        <div
+          className="chapter-detail chapter-detail--unlocked"
+          style={{ "--chapter-accent": "var(--chrome)" } as CSSProperties}
+        >
+          <div className="chapter-detail__patch">
+            <ScrapyardIcon />
+          </div>
+          <div className="chapter-detail__body">
+            <span className="chapter-detail__name">{CHAPTER_MAP_HOME.name}</span>
+            <span className="chapter-detail__region">Home Base</span>
+            <p className="chapter-detail__flavor">{CHAPTER_MAP_HOME.flavor}</p>
+          </div>
         </div>
-        <div className="chapter-detail__body">
-          <span className="chapter-detail__name">{selected.name}</span>
-          <span className="chapter-detail__region">{selected.region}</span>
-          <p className="chapter-detail__flavor">{selected.flavor}</p>
+      ) : (
+        <div
+          className={`chapter-detail${selectedUnlocked ? " chapter-detail--unlocked" : ""}`}
+          style={
+            selectedUnlocked
+              ? ({ "--chapter-accent": selected.accent } as CSSProperties)
+              : undefined
+          }
+        >
+          <div className="chapter-detail__patch">
+            <ChapterPatchIcon patch={selected.patch} />
+          </div>
+          <div className="chapter-detail__body">
+            <span className="chapter-detail__name">{selected.name}</span>
+            <span className="chapter-detail__region">{selected.region}</span>
+            <p className="chapter-detail__flavor">{selected.flavor}</p>
 
-          {selectedUnlocked ? (
-            <>
-              <div className="chapter-detail__bike">
-                <ThrottleIcon className="chapter-detail__bike-icon" />
-                <span>{selected.bikeName}</span>
-              </div>
-              <span className="chapter-detail__bonus">
-                +{(selected.bonus * 100).toFixed(0)}% income
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="chapter-detail__bonus">
-                {unlocksTierName
-                  ? `Unlocks ${unlocksTierName} · +${(selected.bonus * 100).toFixed(0)}% income`
-                  : `+${(selected.bonus * 100).toFixed(0)}% income`}
-              </span>
-              <button
-                className="buy-btn buy-btn--legend chapter-detail__unlock"
-                disabled={!affordable}
-                onClick={() => onUnlock(selected)}
-              >
-                <span className="buy-btn__label">Charter</span>
-                <span className="buy-btn__cost">
-                  <SkullIcon className="buy-btn__cost-icon" />
-                  {formatNumber(selected.unlockCost)}
+            {selectedUnlocked ? (
+              <>
+                <div className="chapter-detail__bike">
+                  <ThrottleIcon className="chapter-detail__bike-icon" />
+                  <span>{selected.bikeName}</span>
+                </div>
+                <span className="chapter-detail__bonus">
+                  +{(selected.bonus * 100).toFixed(0)}% income
                 </span>
-              </button>
-              {prevLocked && (
-                <p className="chapter-detail__hint">
-                  Charter {prevChapter!.name} first.
-                </p>
-              )}
-            </>
-          )}
+              </>
+            ) : (
+              <>
+                <span className="chapter-detail__bonus">
+                  {unlocksTierName
+                    ? `Unlocks ${unlocksTierName} · +${(selected.bonus * 100).toFixed(0)}% income`
+                    : `+${(selected.bonus * 100).toFixed(0)}% income`}
+                </span>
+                <button
+                  className="buy-btn buy-btn--legend chapter-detail__unlock"
+                  disabled={!affordable}
+                  onClick={() => onUnlock(selected)}
+                >
+                  <span className="buy-btn__label">Charter</span>
+                  <span className="buy-btn__cost">
+                    <SkullIcon className="buy-btn__cost-icon" />
+                    {formatNumber(selected.unlockCost)}
+                  </span>
+                </button>
+                {prevLocked && (
+                  <p className="chapter-detail__hint">
+                    Charter {prevChapter!.name} first.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -78,14 +78,14 @@ Recruits tab is a tiered auto-producing chain, not a flat counter. Each tier is 
 | Tier | Weight | Base cost | Cost growth | Unlocked by |
 |---|---|---|---|---|
 | Prospect | 1 | 50 | 1.13 | available from the start |
-| Patched Member | 20 | 2,000 | 1.14 | Chapter 1 — Rust Hollow |
-| Road Captain | 400 | 100,000 | 1.15 | Chapter 2 — Salt Flats |
-| Sergeant at Arms | 8,000 | 6,000,000 | 1.16 | Chapter 3 — Pine Ridge |
-| Vice President | 160,000 | 400,000,000 | 1.17 | Chapter 4 — Bayou Crossing |
-| Chapter President | 3,200,000 | 32,000,000,000 | 1.18 | Chapter 5 — Copper Canyon |
-| National President | 64,000,000 | 3,000,000,000,000 | 1.19 | Chapter 6 — Steel Harbor |
+| Patched Member | 20 | 2,000 | 1.22 | Chapter 1 — Rust Hollow |
+| Road Captain | 400 | 100,000 | 1.23 | Chapter 2 — Salt Flats |
+| Sergeant at Arms | 8,000 | 6,000,000 | 1.24 | Chapter 3 — Pine Ridge |
+| Vice President | 160,000 | 400,000,000 | 1.25 | Chapter 4 — Bayou Crossing |
+| Chapter President | 3,200,000 | 32,000,000,000 | 1.26 | Chapter 5 — Copper Canyon |
+| National President | 64,000,000 | 3,000,000,000,000 | 1.27 | Chapter 6 — Steel Harbor |
 
-Global income bonus from members = `1 + (Σ owned_i × weight_i) × 0.02`. Weights make higher tiers matter far more than raw headcount — deliberate, so the auto-chain doesn't trivialize the multiplier via sheer Prospect volume.
+Global income bonus from members = `1 + (Σ owned_i × weight_i) × 0.008`. Weights make higher tiers matter far more than raw headcount — deliberate, so the auto-chain doesn't trivialize the multiplier via sheer Prospect volume. Prospect's own cost growth (1.13) is untouched — it's the only tier active before Chapter 1 and playtesting confirmed that early ramp already feels right. Every gated tier's cost growth was raised well past its old value (each ~0.08 steeper) specifically to blunt how fast a freshly-unlocked tier can be bought in bulk with a sudden windfall of cash — see "Why tiers are chapter-gated" below for the incident that motivated this.
 
 Club "rank" shown in the header = the name of the highest tier with ≥1 owned. Not gated by a headcount threshold — tied to which tier you've started.
 
@@ -96,6 +96,8 @@ Production compounds: a tier continuously feeds the one below it, and that lower
 Gating Patched Member and above behind chapters means a new player can only grow Prospects (which have no producer above them, so no compounding) until they've earned a chapter's worth of Legend Points — which itself requires having actually played through a full prestige cycle. This doesn't remove the exponential compounding, it just delays when a player can reach it, and ties reaching it to a deliberate, earned decision instead of an accident of leaving a tab open.
 
 **Residual risk to watch during playtesting**: the same runaway-overnight-growth pattern could in principle recur at a *later* stage — e.g., right after unlocking Sergeant at Arms, if left idle for the full offline cap. Gating slows the ramp but doesn't cap the compounding itself. If this resurfaces, the next lever is probably the offline cap/efficiency (`OFFLINE_CAP_SECONDS` / `OFFLINE_EFFICIENCY`) or a diminishing-returns curve on the auto-recruit rate at very large owned counts — not another gating layer.
+
+**This predicted risk did resurface, one tier early.** Real playtesting after Phase 4 shipped: the first prestige (Prospect-only, no chapters) took ~10 minutes and felt right. But the moment Chapter 1 unlocked Patched Member (weight 20, a 20x jump over Prospect's weight of 1), income exploded — the player could charter 3 more chapters within ~5 minutes, then everything remaining (all 8 chapters, every legacy upgrade maxed) within another ~5. Root cause: `memberMultiplier` is linear in owned count but recruit-tier cost growth (1.14–1.19) was gentle enough that, once cash started climbing, buying more of the newly-unlocked high-weight tier stayed cheap relative to the income it unlocked — a self-reinforcing loop with a doubling time of seconds rather than minutes. Fixed two ways at once: every gated tier's cost growth was raised substantially (see the Members table) so stacking a freshly-unlocked tier gets expensive much faster, and `MEMBER_INCOME_BONUS` was cut from 0.02 to 0.008 so each weight-unit contributes less to begin with. Chapter costs were also steepened dramatically as a second, independent safety net — see the Chapters section.
 
 ### Legacy / Prestige ("Go Legendary")
 
@@ -118,18 +120,18 @@ Legacy upgrades (bought with Legend Points, cost = `baseCost * costGrowth^level`
 
 8 chapters, chartered with Legend Points (one-time, no repeat cost scaling). **Chapters are the primary long-term progression gate**: the first 6 each unlock the next Member tier (see the Members section above) — that's the real reward, not the income bonus. The last 2 have no tier left to unlock, so they carry a much bigger income bonus instead, as pure endgame payoff. All bonuses are permanent, stack, and are never reset by prestige.
 
-| # | Chapter | Region | Unlocks | Cost (LP) | Bonus | Patch glyph | Accent |
-|---|---|---|---|---|---|---|---|
-| 1 | Rust Hollow | Rust Belt | Patched Member | 10 | +5% | gear | `#d9662b` (rust) |
-| 2 | Salt Flats | Desert Southwest | Road Captain | 75 | +5% | sun | `#e4b243` (gold) |
-| 3 | Pine Ridge | Pacific Northwest | Sergeant at Arms | 500 | +5% | pine | `#5a8a5a` |
-| 4 | Bayou Crossing | Deep South | Vice President | 4,000 | +5% | moon | `#4a8a94` |
-| 5 | Copper Canyon | Southwest Mesa | Chapter President | 30,000 | +5% | mesa | `#b5651d` |
-| 6 | Steel Harbor | Coastal Port | National President | 200,000 | +5% | anchor | `#7d8c99` |
-| 7 | Wildfire Mesa | High Desert Badlands | — (income only) | 1,000,000 | +20% | flame | `#a3222b` (blood) |
-| 8 | Vulture's Rest | National Chapter | — (income only) | 5,000,000 | +30% | wings | `#8a5aa0` |
+| # | Chapter | Region | Unlocks | Cost (LP) | Cost ratio vs. prior | Bonus | Patch glyph | Accent |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Rust Hollow | Rust Belt | Patched Member | 30 | — | +5% | gear | `#d9662b` (rust) |
+| 2 | Salt Flats | Desert Southwest | Road Captain | 300 | 10x | +5% | sun | `#e4b243` (gold) |
+| 3 | Pine Ridge | Pacific Northwest | Sergeant at Arms | 4,000 | 13.3x | +5% | pine | `#5a8a5a` |
+| 4 | Bayou Crossing | Deep South | Vice President | 70,000 | 17.5x | +5% | moon | `#4a8a94` |
+| 5 | Copper Canyon | Southwest Mesa | Chapter President | 1,500,000 | 21.4x | +5% | mesa | `#b5651d` |
+| 6 | Steel Harbor | Coastal Port | National President | 40,000,000 | 26.7x | +5% | anchor | `#7d8c99` |
+| 7 | Wildfire Mesa | High Desert Badlands | — (income only) | 1,200,000,000 | 30x | +20% | flame | `#a3222b` (blood) |
+| 8 | Vulture's Rest | National Chapter | — (income only) | 50,000,000,000 | 41.7x | +30% | wings | `#8a5aa0` |
 
-**These costs are a first-pass proposal, not final** — tune against actual Legend Point earn rates once tier-gating is implemented and playtested. The governing principle: each chapter's cost should scale roughly with the power of the tier it unlocks (tier weight jumps ~20x per step), so this curve is deliberately much steeper (~6-8x per chapter) than the old flat ~2.5x curve it replaces. Chapters 7-8 have no tier to gate, so their bonus was raised from the old flat +5%/+10% to +20%/+30% so they still feel worth their (very steep) cost.
+**Second-pass numbers, revised after real playtesting** (the first pass — a flat ~6-8x-per-chapter curve topping out at 5,000,000 LP — is preserved in git history for reference). Real play surfaced the exact "residual risk" the Members section above flagged: Chapter 1 took a satisfying ~10 minutes, but the income explosion the moment Patched Member unlocked meant the player could then afford chapters 2-4 within ~5 more minutes, and everything else (remaining chapters, every legacy upgrade maxed) within another ~5. Two problems, addressed together: the member-economy fix above slows how fast income can explode after any given chapter unlocks, and this cost curve was steepened dramatically and made **deliberately accelerating** — each chapter costs a bigger multiple of the last (10x, then 13x, 17x, 21x, 27x, 30x, 42x) rather than a constant ratio, so the game gets harder to advance in at a compounding rate as you go. This is intentional pacing, not just an anti-exploit patch: the design goal is for Chapter 1 to feel like a slow, earned, ~20-30-minute achievement; Chapter 2 to cost meaningfully more active+idle time on top of that; and the later chapters to require leaving the game running and checking back hours or a day later rather than something completable in one sitting. Chapters 7-8 have no tier to gate, so their bonus stays raised from the old flat +5%/+10% to +20%/+30% so they still feel worth their (very steep) cost. **These are still first-pass numbers for this second curve** — real wall-clock pacing depends heavily on individual play patterns (tap frequency, prestige timing, how often the player returns to check in), so expect another round of tuning once this version gets real playtime.
 
 All 8 chartered = permanent +75% global income, on top of unlocking the full Member tier chain.
 
@@ -137,13 +139,14 @@ All 8 chartered = permanent +75% global income, on top of unlocking the full Mem
 
 Replace the current 2-column card grid with a hand-drawn SVG map: an invented landmass (**not** the real world or a recognizable US shape) showing all 8 chapters as city pins connected by roads, laid out as a single route matching the unlock order above (Rust Hollow → Salt Flats → ... → Vulture's Rest). This doubles as a visual progress indicator — the club's territory visibly spreads across the map as you play, reinforcing that chapters are a journey, not a shop list.
 
+- **Home node ("Clubhouse")**: a 9th, always-unlocked anchor point (`CHAPTER_MAP_HOME` in `data.ts`) sitting above Rust Hollow, not part of the `CHAPTERS` array and not purchasable — it exists purely so the very first charter a player buys (Rust Hollow) already completes one visible road segment on the map. Without it, the first two chapters both had to be chartered before any road showed solid, which read as "nothing happened" on a player's first-ever charter purchase.
 - **Locked city**: dim/greyed pin, name hidden or shown as "???"
 - **Unlocked city**: full-color pin using the chapter's patch glyph and accent color, name and bike revealed
 - **Road segments**: the route is strictly linear, so the road between city *i* and city *i+1* is greyed/dashed by default and becomes solid/colored the moment city *i+1* is chartered (city *i* is always already unlocked by construction — no case where a later city unlocks before an earlier one)
-- Tapping a city opens a detail view (inline panel or modal — TBD at implementation time) with its flavor text, cost, what it unlocks, and the Charter button, so the map itself stays uncluttered and detail is on-demand
+- Tapping a city (including the Clubhouse) opens an inline detail panel below the map with its flavor text, cost, what it unlocks, and the Charter button, so the map itself stays uncluttered and detail is on-demand
 - Same constraints as the rest of the game's art: hand-coded SVG, no map/tile libraries, must stay usable at mobile widths (~390px)
 
-This is the largest single piece of the recruit/chapter rework — expect it to be the most implementation-heavy item, likely wanting its own new component (replacing `ChaptersTab.tsx`'s current grid rendering) plus fixed city/road coordinate data in `data.ts`.
+Implemented as `ChaptersTab.tsx`, replacing the old grid, with city/road coordinates in `data.ts` (`CHAPTER_MAP_VIEWBOX`, `CHAPTER_MAP_HOME`, and `mapX`/`mapY` on each `ChapterDef`).
 
 ### Global income formula
 
