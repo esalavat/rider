@@ -723,6 +723,30 @@ input {
   width: 100%;
 }
 
+/* Danger zone */
+
+.danger-zone {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0 4px;
+}
+
+.danger-btn {
+  background: none;
+  border: 2px solid var(--blood-dark);
+  border-radius: 4px;
+  color: var(--blood);
+  padding: 8px 16px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.danger-btn:active {
+  background: var(--blood-dark);
+  color: var(--text);
+}
+
 /* Tab nav */
 
 .tab-nav {

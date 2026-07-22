@@ -23,6 +23,7 @@ export default function App() {
     unlockChapter,
     kickstart,
     renameClub,
+    hardReset,
   } = useGameState();
 
   const [tab, setTab] = useState<TabId>("rackets");
@@ -56,6 +57,7 @@ export default function App() {
             state={state}
             onBuyUpgrade={buyLegacyUpgrade}
             onPrestige={doPrestige}
+            onHardReset={hardReset}
           />
         )}
       </main>

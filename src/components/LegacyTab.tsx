@@ -13,6 +13,7 @@ interface LegacyTabProps {
   state: GameState;
   onBuyUpgrade: (upgrade: LegacyUpgradeDef) => void;
   onPrestige: () => void;
+  onHardReset: () => void;
 }
 
 function effectLabel(upgrade: LegacyUpgradeDef): string {
@@ -26,9 +27,24 @@ function effectLabel(upgrade: LegacyUpgradeDef): string {
   }
 }
 
-export function LegacyTab({ state, onBuyUpgrade, onPrestige }: LegacyTabProps) {
+export function LegacyTab({
+  state,
+  onBuyUpgrade,
+  onPrestige,
+  onHardReset,
+}: LegacyTabProps) {
   const pending = legendPointsOnPrestige(state);
   const eligible = canPrestige(state);
+
+  const handleReset = () => {
+    if (
+      window.confirm(
+        "Reset ALL progress? This wipes your cash, rackets, members, legend points, and chapters for good. This can't be undone."
+      )
+    ) {
+      onHardReset();
+    }
+  };
 
   return (
     <div className="tab-panel">
@@ -87,6 +103,12 @@ export function LegacyTab({ state, onBuyUpgrade, onPrestige }: LegacyTabProps) {
             </div>
           );
         })}
+      </div>
+
+      <div className="danger-zone">
+        <button className="danger-btn" onClick={handleReset}>
+          Reset Progress
+        </button>
       </div>
     </div>
   );
