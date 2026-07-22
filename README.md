@@ -64,11 +64,11 @@ icon/splash screen assets in `ios/App/App/Assets.xcassets` and
 [assets generator](https://capacitorjs.com/docs/guides/splash-screens-and-icons)
 can automate this from a single source image).
 
-## Game design notes
+## Game design & roadmap
 
-- `src/game/data.ts` — all tunable numbers: rackets, costs, member ranks,
-  legacy/prestige upgrades
-- `src/game/engine.ts` — pure calculation functions (cost curves, income,
-  prestige math) — no side effects, easy to unit test
-- `src/game/useGameState.ts` — the game loop (requestAnimationFrame tick),
-  autosave, and offline-progress-on-load
+- [`GAME_DESIGN.md`](GAME_DESIGN.md) — source of truth for the game's systems,
+  formulas, target numbers, and architecture conventions
+- [`ROADMAP.md`](ROADMAP.md) — what's actually built vs. still planned, plus a
+  log of notable past bugs and fixes
+- [`CLAUDE.md`](CLAUDE.md) — commands and codebase orientation for AI coding
+  agents working in this repo

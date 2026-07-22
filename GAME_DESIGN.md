@@ -1,6 +1,8 @@
-# RIDER — Game Design & Technical Reference
+# RIDER — Game Design
 
-Living reference for continuing development across sessions. If a system changes, update this file in the same commit — it should never fall meaningfully behind `src/game/data.ts`, which is the actual source of truth for numbers.
+Source of truth for what the game **should be**: systems, formulas, target numbers, architecture conventions, and visual design. If a number here and the number in `src/game/data.ts` disagree, that's a bug — fix the code to match this doc, or update this doc if the design intentionally changed.
+
+For what's actually **built vs. still planned**, see [`ROADMAP.md`](ROADMAP.md).
 
 ## Pitch
 
@@ -11,7 +13,7 @@ Default club name: "Iron Vultures MC" (player-editable). Game title: "RIDER — 
 ## Tech stack
 
 - React 19 + TypeScript + Vite, no backend — all state lives in `localStorage`
-- [Capacitor](https://capacitorjs.com/) for the future iOS/Android app-store path (native project shells already generated and committed under `ios/` and `android/`)
+- [Capacitor](https://capacitorjs.com/) for the future iOS/Android app-store path (native project shells generated under `ios/` and `android/`)
 - GitHub Actions deploys `main` to GitHub Pages automatically (`.github/workflows/deploy.yml`)
 - No external UI/icon libraries — every icon in `src/components/icons.tsx` is a hand-coded flat-vector SVG (viewBox `0 0 48 48`, `stroke=currentColor`, `strokeWidth 2.5`, `fill: none` by default) to keep the art style consistent and dependency-free
 
@@ -42,11 +44,21 @@ src/components/
   icons.tsx          — every hand-coded SVG icon in the game
 ```
 
-**Convention: keep `engine.ts` pure.** Every action (`buyRacket`, `unlockChapter`, `prestige`, etc.) takes `(state, ...)` and returns a new `GameState`; it never mutates and never touches `localStorage`/DOM/timers. `useGameState.ts` is the only place side effects (timers, storage, React state) happen. This split is what makes offline-progress calculation, the game loop, and save migration all reuse the exact same math without drift — preserve it when adding systems.
+### Conventions to preserve
 
-**Convention: data-driven content.** New rackets/tiers/upgrades/chapters are added as new entries in the arrays in `data.ts`, not as new code paths. UI components map over these arrays. Keep it this way — it's what makes the four content tabs (Rackets/Recruits/Chapters/Legacy) each ~100 lines despite having 5-8 items each.
+**Keep `engine.ts` pure.** Every action (`buyRacket`, `unlockChapter`, `prestige`, etc.) takes `(state, ...)` and returns a new `GameState`; it never mutates and never touches `localStorage`/DOM/timers. `useGameState.ts` is the only place side effects (timers, storage, React state) happen. This split is what makes offline-progress calculation, the game loop, and save migration all reuse the exact same math without drift.
 
-## Core systems (current numbers)
+**Data-driven content.** New rackets/tiers/upgrades/chapters are added as new entries in the arrays in `data.ts`, not as new code paths. UI components map over these arrays. This is what keeps the four content tabs (Rackets/Recruits/Chapters/Legacy) each ~100 lines despite having 5-8 items apiece.
+
+**Save schema evolution.** To add a new persisted field: add it to `GameState` in `types.ts`, initialize it in `createNewGame()` in `engine.ts`, add a merge line in `loadGame()` in `save.ts` (`newField: { ...fresh.newField, ...(parsed.newField ?? {}) }`), and bump `SAVE_VERSION`. Only write a real migration (reshaping old data, like converting the old flat `members` count into `memberTiers.prospect`) when defaulting isn't enough.
+
+**UI elements must reserve layout space, not conditionally mount.** Anything that appears/disappears based on game state (a newly-affordable button, a milestone indicator) should always render and toggle `visibility: hidden` rather than being conditionally mounted (`{cond && <x/>}`). Conditional mounting changes element height, which shifts everything below it — this caused a real, visible layout-jank bug (see `ROADMAP.md`). Stat/number displays should also use `font-variant-numeric: tabular-nums` and a fixed `min-width` where the digit count can change.
+
+**Numbers must degrade gracefully at arbitrary magnitude.** This is an idle game — values can exceed `Number.MAX_VALUE` after enough sustained play. `formatNumber` (in `format.ts`) must switch to scientific notation before doing any division-based suffix math, and must render true `Infinity` as `"∞"`, never silently as `"0"`. Test any change to `formatNumber` against values in the 1e300+ range, not just "big" (1e6–1e15) ones.
+
+**Testing approach.** No automated test suite yet — `engine.ts`'s purity makes one easy to add later if desired. Verification during development is manual, via the `chrome-devtools` MCP tools against a local `vite preview` server: take snapshots/screenshots at mobile viewport sizes (390×844 typical), check `list_console_messages` for errors, and to test specific game states without waiting for real progression, use `evaluate_script` to read/modify the `rider-mc-save-v1` localStorage key directly, then reload. Gotcha: the running page's own autosave will overwrite a manual localStorage edit if the same tab is still open — monkey-patch `localStorage.setItem` to a no-op in that tab after writing, or open a fresh tab to read the injected state cleanly.
+
+## Core systems
 
 ### Rackets (idle income)
 
@@ -54,12 +66,12 @@ src/components/
 
 - Cost of the Nth unit: `baseCost * costGrowth^owned` (growth ranges 1.14–1.16 across rackets, rising with tier)
 - Income: linear, `owned * baseIncome`, before multipliers
-- "Buy Max" purchases as many as affordable in one tap (capped at 1000/click, `maxAffordableRackets`)
-- **Milestone upgrades**: at 10/25/50/100/200 owned, a one-time cash purchase (`RACKET_MILESTONE_COST_MULTIPLIER = 10` × the cost of that Nth unit) permanently doubles that racket's output (`RACKET_MILESTONE_BONUS = 2`, stacks multiplicatively to x32 at all 5 bought). **Milestones persist across prestige** — stored in `state.racketMilestones`, separate from `state.rackets` (which resets on prestige).
+- "Buy Max" purchases as many as affordable in one tap (capped at 1000/click)
+- **Milestone upgrades**: at 10/25/50/100/200 owned, a one-time cash purchase (10× the cost of that Nth unit) permanently doubles that racket's output (stacks multiplicatively to x32 at all 5 bought). **Milestones persist across prestige** — stored separately from racket ownership, which resets.
 
 ### Members (producer chain)
 
-Recruits tab is a tiered auto-producing chain, not a flat counter. Each tier is bought with cash; once you own ≥1 of a tier, it auto-recruits the tier below it at `MEMBER_AUTO_RATE = 0.1` (units/sec per unit owned), accumulated via a fractional `state.memberProgress` counter so partial production isn't lost between ticks.
+Recruits tab is a tiered auto-producing chain, not a flat counter. Each tier is bought with cash; once you own ≥1 of a tier, it auto-recruits the tier below it at a rate of 0.1 units/sec per unit owned, accumulated via a fractional progress counter so partial production isn't lost between ticks.
 
 | Tier | Weight | Base cost | Cost growth | Requires |
 |---|---|---|---|---|
@@ -71,17 +83,17 @@ Recruits tab is a tiered auto-producing chain, not a flat counter. Each tier is 
 | Chapter President | 3,200,000 | 32,000,000,000 | 1.18 | Vice President |
 | National President | 64,000,000 | 3,000,000,000,000 | 1.19 | Chapter President |
 
-Global income bonus from members = `1 + (Σ owned_i × weight_i) × MEMBER_INCOME_BONUS(0.02)`. Weights make higher tiers matter far more than raw headcount — this is deliberate so the auto-chain doesn't trivialize the multiplier via sheer Prospect volume.
+Global income bonus from members = `1 + (Σ owned_i × weight_i) × 0.02`. Weights make higher tiers matter far more than raw headcount — deliberate, so the auto-chain doesn't trivialize the multiplier via sheer Prospect volume.
 
-Club "rank" shown in the header = the name of the highest tier with ≥1 owned (`memberRank` in engine.ts). Not gated by a headcount threshold — literally tied to which tier you've started.
+Club "rank" shown in the header = the name of the highest tier with ≥1 owned. Not gated by a headcount threshold — tied to which tier you've started.
 
-**Known behavior, not a bug**: because production compounds (higher tiers feed lower ones continuously), owned counts for low tiers can reach tens of thousands after long sustained/idle play. This is expected lategame scale — see the number-formatting section below for how the UI handles it.
+Because production compounds (higher tiers continuously feed lower ones), owned counts for low tiers are expected to reach tens of thousands after long sustained/idle play — this is intended lategame scale, not something to "fix" by capping.
 
 ### Legacy / Prestige ("Go Legendary")
 
 - Legend Points earned on prestige: `floor(sqrt(cashEarnedThisRun / 1_000_000))`
-- Prestige resets: `cash`, `cashEarnedThisRun`, `rackets` (owned counts), `memberTiers`, `memberProgress`
-- Prestige does **not** reset: `legendPoints` (+= earned), `racketMilestones`, `legacyLevels`, `unlockedChapters`, `prestigeCount` (+=1)
+- Prestige resets: cash, cash earned this run, racket ownership counts, member tier ownership/progress
+- Prestige does **not** reset: Legend Points (they accumulate), racket milestones, legacy upgrade levels, unlocked chapters, prestige count
 - Starting cash after a reset = `nest_egg` legacy upgrade level × 2500
 
 Legacy upgrades (bought with Legend Points, cost = `baseCost * costGrowth^level`):
@@ -95,7 +107,7 @@ Legacy upgrades (bought with Legend Points, cost = `baseCost * costGrowth^level`
 
 ### Chapters (collectible map)
 
-8 chapters, unlocked with Legend Points (one-time, no repeat cost scaling), each granting a **permanent stacking** global income bonus and never reset by prestige (`state.unlockedChapters`). Each has a unique hand-drawn patch glyph (`ChapterPatchIcon` in icons.tsx) and a named bike, revealed on unlock. This is the game's collection/cosmetic layer as well as a progression system.
+8 chapters, unlocked with Legend Points (one-time, no repeat cost scaling), each granting a **permanent stacking** global income bonus and never reset by prestige. Each has a unique hand-drawn patch glyph and a named bike, revealed on unlock. This is the game's collection/cosmetic layer as well as a progression system.
 
 | Chapter | Region | Cost (LP) | Bonus | Patch glyph | Accent |
 |---|---|---|---|---|---|
@@ -110,6 +122,8 @@ Legacy upgrades (bought with Legend Points, cost = `baseCost * costGrowth^level`
 
 All 8 chartered = +40% permanent global income.
 
+Chapter bonuses are intentionally flat/uniform (5% each, 10% for the capstone) for now — if the game needs a steeper lategame curve, chapters are the most natural lever to scale up, since they're the newest/least-tuned system.
+
 ### Global income formula
 
 ```
@@ -122,22 +136,21 @@ totalIncomePerSecond =
 
 ### Manual click ("Twist the Throttle")
 
-`clickBonus = max(CLICK_BONUS_FLOOR(10), totalIncomePerSecond × CLICK_BONUS_INCOME_SHARE(0.6))` — matters a lot at zero income, negligible once rackets are running. Intentional: gives new players something to do before the idle loop takes over.
+`clickBonus = max(10, totalIncomePerSecond × 0.6)` — matters a lot at zero income, negligible once rackets are running. Intentional: gives new players something to do before the idle loop takes over.
 
 ### Offline progress
 
-On load, if the app was closed ≥5s: elapsed time is capped at `OFFLINE_CAP_SECONDS (4h)` and paid out at `OFFLINE_EFFICIENCY (50%)`. Member auto-production also runs for the same effective window (`applyMemberAutoProduction` inside `applyOfflineProgress`). Shown via `WelcomeBackModal`.
+On load, if the app was closed ≥5s: elapsed time is capped at 4 hours and paid out at 50% efficiency. Member auto-production also runs for the same effective window. Shown via a "welcome back" modal.
 
 ### Autosave
 
-Every 10s (`AUTOSAVE_INTERVAL_MS`), plus on `visibilitychange` and `beforeunload`. Game loop ticks are throttled to 4/sec (`TICK_INTERVAL_SECONDS = 0.25`) — see "Layout jank" below for why.
+Every 10s, plus on tab-hide and page-unload. Game loop ticks are throttled to 4/sec — see the UI-conventions note above for why.
 
-## Save system
+## Save system design
 
-- Key: `rider-mc-save-v1` in `localStorage` (the `-v1` suffix is the storage key name and hasn't changed; the actual save *schema* version is the `version` field inside the JSON, currently **4**)
-- `save.ts`'s `loadGame()` merges a fresh `createNewGame()` state with whatever's in storage, so new fields introduced by later versions default sanely for old saves
-- **Pattern for adding a new persisted field**: add it to `GameState` in `types.ts`, initialize it in `createNewGame()` in `engine.ts`, add a merge line in `loadGame()` in `save.ts` (`newField: { ...fresh.newField, ...(parsed.newField ?? {}) }`), and bump `SAVE_VERSION`. Only write a real migration (like the v1→v2 flat-`members`-to-`memberTiers.prospect` conversion in `save.ts`) if old data needs reshaping rather than just defaulting.
-- In-game reset: Legacy tab → "Reset Progress" button (confirm-gated via `window.confirm`), calls `hardReset()` from `useGameState`. This is the only in-app way to wipe a save — there's no cloud save/account system, so this is also how a player would test pacing from scratch on their phone without digging into browser settings.
+- Storage key: `rider-mc-save-v1` (this suffix is just the key name and hasn't changed; the actual save *schema* version is the `version` field inside the JSON — see `ROADMAP.md` for the current value and version history)
+- `loadGame()` merges a fresh `createNewGame()` state with whatever's in storage, so new fields default sanely for old saves without an explicit migration in most cases
+- In-game reset: Legacy tab → "Reset Progress" button (confirm-gated), the only in-app way to wipe a save — there's no cloud save/account system, so it's also how a player tests pacing from scratch on their phone without digging into browser settings
 
 ## Visual design system
 
@@ -157,42 +170,26 @@ Fonts: Teko (display/numbers, condensed impactful) + Oswald (body), loaded via G
 
 Chapter patches use a few additional muted accent colors *outside* this core palette (see table above) — deliberately contained to that one collectible-badge context rather than spreading through the app chrome.
 
-## Mobile/layout lessons learned (read before touching CSS)
+## Deployment & infrastructure design
 
-Two real bugs were found and fixed this way — worth knowing before changing layout or number formatting:
+- `vite.config.ts` reads a `VITE_BASE_PATH` env var for the asset base path — empty/`/` for local dev and Capacitor builds, `/rider/` for the GitHub Pages build
+- GitHub Actions deploys `main` to Pages via `actions/deploy-pages` on every push
+- Capacitor's `ios/` and `android/` native project shells are committed to the repo so a future session can open and build them directly, rather than being generated on demand
+- `npm run cap:sync` / `cap:ios` / `cap:android` rebuild the web bundle and open the native IDE projects
 
-1. **Layout jank from constant re-renders + conditional mounting.** The game loop originally called `setState` every animation frame (~60/s), re-rendering the full card list constantly; throttled to 4/s (`TICK_INTERVAL_SECONDS`) fixed most of it. The rest came from elements like the "Buy Max" button and per-item income line being conditionally *mounted* (`{cond && <button>}`) instead of always rendered — appearing/disappearing changed card height and shifted everything below it. Fix: always render these elements, toggle `visibility: hidden` (not `display: none`) instead, so the layout box is always reserved. Stat pills also got fixed `min-width` + `font-variant-numeric: tabular-nums` so digit-count changes don't visibly resize them. **When adding any UI element that appears conditionally based on game state (a new unlock, a new threshold), default to this reserved-space pattern rather than conditional mounting.**
+## Planned but unbuilt systems
 
-2. **Number formatting breaking at extreme magnitudes.** `formatNumber` used to divide by a capped suffix tier (`Dc` = 10^33) for anything larger, which for truly huge values (member tier costs after long sustained auto-production, e.g. 1e150+) produced a broken hybrid string like `"1.73e+189Dc"` because `Number.prototype.toFixed` itself falls back to exponential notation above 1e21 — the code was then appending a suffix onto an already-exponential string. Separately, actual `Infinity` (from `Math.pow` overflow at very large owned counts) silently rendered as `"0"` via a naive `!Number.isFinite` guard, making unaffordable costs look free. Fixed in `format.ts`: switch to clean scientific notation (`abs.toExponential(2)`) once the magnitude exceeds the suffix table *before* doing any division, and render true `Infinity` as `"∞"`. **If you touch `formatNumber`, test it against values beyond `Number.MAX_VALUE`-adjacent ranges (1e300+), not just "big" (1e6-1e15) ones** — idle games reach genuinely absurd numbers given enough playtime.
+These describe design intent for features not yet implemented — see `ROADMAP.md` for build status.
 
-## Testing approach used in this repo
+### Racket bosses
 
-No automated test suite yet (small hobby project, `engine.ts`'s purity makes it easy to add one later if desired). Verification during development has been manual, via the `chrome-devtools` MCP tools against a local `vite preview` server:
-- Take snapshots/screenshots at mobile viewport sizes (390×844 typical) after every UI change
-- Check `list_console_messages` for errors after load and after interactions
-- To test specific game states (large owned counts, high cash, specific unlocks) without waiting for real progression: `evaluate_script` to read/modify the `rider-mc-save-v1` localStorage key directly, then reload. **Gotcha**: the running page's own autosave (every 10s, plus on unload) will overwrite a manual localStorage edit if the tab that made the edit is still open — either monkey-patch `localStorage.setItem` to a no-op in that tab after writing, or open a fresh tab to the same origin to read the injected state cleanly.
+Let the player assign a top-tier member (Chapter President/National President) to a specific racket as a "boss" for a racket-only bonus, converting some of the passive multiplier into a placement decision. Needs a state field to track which member tier (if any) is assigned to each racket, UI on the racket cards to assign/unassign, and a design decision on whether an assigned boss is removed from the general member pool (and its weight) or just tagged as dual-purpose. Unresolved — see open questions below.
 
-## Deployment / infrastructure
+### Quality-of-life shop
 
-- `vite.config.ts` reads `VITE_BASE_PATH` env var for the asset base path — empty/`/` for local dev and Capacitor builds, `/rider/` for the GitHub Pages build (`npm run build:pages`, also what CI runs)
-- `.github/workflows/deploy.yml`: on push to `main`, builds and deploys to GitHub Pages via `actions/deploy-pages`. Pages source is set to "GitHub Actions" in repo settings (one-time setup, already done)
-- Capacitor: `ios/` and `android/` native project shells already generated (`npx cap add ios/android`) and committed. `appId` is currently the placeholder `com.esalavat.rider` — **must be changed before any real app-store submission** if that's not the intended final bundle ID. App icons/splash screens are still Capacitor's defaults — need replacing via Capacitor's asset generator before submission. No signing, no store listing work started.
-- `npm run cap:sync` / `cap:ios` / `cap:android` rebuild the web bundle and open the native IDE projects.
+Auto-buy-cheapest toggle, a bulk-buy stepper (x1/x10/x25/Max) as an alternative to the single Max button, extended offline-cap tiers purchasable with cash or Legend Points, a compact-number-notation toggle.
 
-## Roadmap status
+## Open design questions
 
-From the original feature-brainstorm session, in build order:
-
-- ✅ **Phase 1 — Member producer chain**: done (see Members section above)
-- ✅ **Phase 2 — Racket milestone upgrades**: done, persists across prestige
-- ✅ **Phase 3 — Chapter map**: done, 8 chapters with unique patches/bikes
-- ✅ **Reset Progress button**: done (Legacy tab)
-- ⬜ **Phase 4 — Racket bosses (stretch)**: not built. Idea: let the player assign a top-tier member (Chapter President/National President) to a specific racket as a "boss" for a racket-only bonus, converting some of the passive multiplier into a placement decision. Would need: a new `state.racketBosses: Record<racketId, memberTierIdOrNull>` (or similar), UI on the racket cards to assign/unassign, and a rule for what happens to a boss's underlying member count (still counts toward the global multiplier weight, or removed from the pool while assigned — needs a decision).
-- ⬜ **QoL shop ideas not yet built**: auto-buy-cheapest toggle, bulk-buy stepper (x1/x10/x25/Max) as an alternative to the single Max button, extended offline-cap tiers purchasable with cash/Legend Points, compact-number-notation toggle.
-- ⬜ **Not started**: any real audio, achievements/milestones beyond racket/chapter unlocks, leaderboards or any server-backed feature (would require picking a backend — currently 100% local-only by design), app store submission itself (icons, signing, listings).
-
-## Open questions / decisions for the next session
-
-- Should Phase 4 (racket bosses) actually pull a member out of the general pool while assigned, or just tag one as a bonus multiplier without removing it from `effectiveMemberWeight`? Affects balance and needs a decision before implementing.
-- Chapter bonuses are currently flat/uniform in *design intent* (5% each, 10% for the capstone) — if the game needs a steeper lategame curve, chapters are the most natural lever to scale up next since they're already the newest/least-tuned system.
-- No unit tests exist. If the project grows, `engine.ts`'s pure functions are the obvious first candidates (cost curves, prestige math, milestone thresholds) since they need zero mocking.
+- **Racket bosses**: should an assigned boss be pulled out of the general member pool (reducing `effectiveMemberWeight`) while assigned, or just tagged as a bonus without being removed? Affects balance and needs a decision before implementing.
+- No backend/server-side features are planned — leaderboards, cloud save, or accounts would all require picking a backend, which is a deliberate non-goal for now (100% local-only by design). Revisit only if there's a real reason to.
