@@ -342,6 +342,24 @@ input {
   font-variant-numeric: tabular-nums;
 }
 
+.racket-card__milestones {
+  display: flex;
+  gap: 4px;
+  margin: 4px 0 2px;
+}
+
+.milestone-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--bg-raised);
+  border: 1px solid var(--ink);
+}
+
+.milestone-dot--filled {
+  background: var(--gold);
+}
+
 .racket-card__actions {
   display: flex;
   flex-direction: column;
@@ -411,6 +429,17 @@ input {
 
 .buy-btn--legend {
   background: var(--gold);
+}
+
+.buy-btn--milestone {
+  background: var(--bg-panel-alt);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.buy-btn--milestone:disabled {
+  color: var(--text-dim);
+  border-color: #333;
 }
 
 /* Recruits */

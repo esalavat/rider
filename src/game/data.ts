@@ -82,6 +82,10 @@ export const RACKETS: RacketDef[] = [
   },
 ];
 
+export const RACKET_MILESTONES = [10, 25, 50, 100, 200];
+export const RACKET_MILESTONE_BONUS = 2;
+export const RACKET_MILESTONE_COST_MULTIPLIER = 10;
+
 export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
   {
     id: "chrome_plating",

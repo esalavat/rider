@@ -5,12 +5,15 @@ import {
   MEMBER_AUTO_RATE,
   MEMBER_INCOME_BONUS,
   MEMBER_TIERS,
+  RACKET_MILESTONE_BONUS,
+  RACKET_MILESTONE_COST_MULTIPLIER,
+  RACKET_MILESTONES,
   RACKETS,
 } from "./data";
 import type { GameState, LegacyUpgradeDef, MemberTierDef, RacketDef } from "./types";
 
 export const SAVE_KEY = "rider-mc-save-v1";
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export function createNewGame(): GameState {
   const now = Date.now();
@@ -22,6 +25,7 @@ export function createNewGame(): GameState {
     legendPoints: 0,
     prestigeCount: 0,
     rackets: Object.fromEntries(RACKETS.map((r) => [r.id, 0])),
+    racketMilestones: Object.fromEntries(RACKETS.map((r) => [r.id, 0])),
     legacyLevels: Object.fromEntries(LEGACY_UPGRADES.map((u) => [u.id, 0])),
     memberTiers: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
     memberProgress: Object.fromEntries(MEMBER_TIERS.map((t) => [t.id, 0])),
@@ -45,6 +49,56 @@ export function racketIsUnlocked(state: GameState, racket: RacketDef): boolean {
 
 export function racketIncomePerSecond(racket: RacketDef, owned: number): number {
   return owned * racket.baseIncome;
+}
+
+export function racketMilestoneLevel(state: GameState, racket: RacketDef): number {
+  return state.racketMilestones[racket.id] ?? 0;
+}
+
+export function racketMilestoneMultiplier(
+  state: GameState,
+  racket: RacketDef
+): number {
+  return Math.pow(RACKET_MILESTONE_BONUS, racketMilestoneLevel(state, racket));
+}
+
+export function racketMilestoneNextThreshold(
+  state: GameState,
+  racket: RacketDef
+): number | null {
+  const level = racketMilestoneLevel(state, racket);
+  return level < RACKET_MILESTONES.length ? RACKET_MILESTONES[level] : null;
+}
+
+export function racketMilestoneCost(
+  state: GameState,
+  racket: RacketDef
+): number | null {
+  const threshold = racketMilestoneNextThreshold(state, racket);
+  if (threshold === null) return null;
+  return Math.ceil(racketCost(racket, threshold) * RACKET_MILESTONE_COST_MULTIPLIER);
+}
+
+export function buyRacketMilestone(state: GameState, racket: RacketDef): GameState {
+  const threshold = racketMilestoneNextThreshold(state, racket);
+  if (threshold === null) return state;
+  if (racketOwned(state, racket) < threshold) return state;
+  const cost = racketMilestoneCost(state, racket);
+  if (cost === null || state.cash < cost) return state;
+  const level = racketMilestoneLevel(state, racket);
+  return {
+    ...state,
+    cash: state.cash - cost,
+    racketMilestones: { ...state.racketMilestones, [racket.id]: level + 1 },
+  };
+}
+
+export function racketEffectiveIncomePerSecond(
+  state: GameState,
+  racket: RacketDef
+): number {
+  const owned = racketOwned(state, racket);
+  return racketIncomePerSecond(racket, owned) * racketMilestoneMultiplier(state, racket);
 }
 
 export function legacyLevel(state: GameState, upgrade: LegacyUpgradeDef): number {
@@ -128,8 +182,7 @@ export function globalMultiplier(state: GameState): number {
 
 export function totalIncomePerSecond(state: GameState): number {
   const base = RACKETS.reduce(
-    (sum, racket) =>
-      sum + racketIncomePerSecond(racket, racketOwned(state, racket)),
+    (sum, racket) => sum + racketEffectiveIncomePerSecond(state, racket),
     0
   );
   return base * globalMultiplier(state);

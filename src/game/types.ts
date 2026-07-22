@@ -53,6 +53,7 @@ export interface GameState {
   legendPoints: number;
   prestigeCount: number;
   rackets: Record<string, number>;
+  racketMilestones: Record<string, number>;
   legacyLevels: Record<string, number>;
   memberTiers: Record<string, number>;
   memberProgress: Record<string, number>;

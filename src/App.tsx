@@ -14,6 +14,7 @@ export default function App() {
     dismissOfflineReport,
     buyRacket,
     buyMaxRackets,
+    buyRacketMilestone,
     buyMemberTier,
     buyMaxMemberTier,
     buyLegacyUpgrade,
@@ -34,6 +35,7 @@ export default function App() {
             state={state}
             onBuy={buyRacket}
             onBuyMax={buyMaxRackets}
+            onBuyMilestone={buyRacketMilestone}
             onKickstart={kickstart}
           />
         )}

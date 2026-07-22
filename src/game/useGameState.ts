@@ -9,6 +9,7 @@ import {
   buyMaxRackets as buyMaxRacketsAction,
   buyMemberTier as buyMemberTierAction,
   buyRacket as buyRacketAction,
+  buyRacketMilestone as buyRacketMilestoneAction,
   clickBonus,
   prestige as prestigeAction,
   totalIncomePerSecond,
@@ -100,6 +101,10 @@ export function useGameState() {
     setState((prev) => buyMaxRacketsAction(prev, racket));
   }, []);
 
+  const buyRacketMilestone = useCallback((racket: RacketDef) => {
+    setState((prev) => buyRacketMilestoneAction(prev, racket));
+  }, []);
+
   const buyMemberTier = useCallback((tier: MemberTierDef) => {
     setState((prev) => buyMemberTierAction(prev, tier));
   }, []);
@@ -137,6 +142,7 @@ export function useGameState() {
     dismissOfflineReport,
     buyRacket,
     buyMaxRackets,
+    buyRacketMilestone,
     buyMemberTier,
     buyMaxMemberTier,
     buyLegacyUpgrade,

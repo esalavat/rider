@@ -23,6 +23,10 @@ export function loadGame(): GameState {
       ...parsed,
       version: SAVE_VERSION,
       rackets: { ...fresh.rackets, ...(parsed.rackets ?? {}) },
+      racketMilestones: {
+        ...fresh.racketMilestones,
+        ...(parsed.racketMilestones ?? {}),
+      },
       legacyLevels: { ...fresh.legacyLevels, ...(parsed.legacyLevels ?? {}) },
       memberTiers: { ...fresh.memberTiers, ...migratedMemberTiers },
       memberProgress: { ...fresh.memberProgress, ...(parsed.memberProgress ?? {}) },
