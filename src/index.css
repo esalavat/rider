@@ -216,7 +216,7 @@ input {
 
 .app-main {
   flex: 1;
-  padding: 16px 12px 96px;
+  padding: 16px 12px calc(96px + env(safe-area-inset-bottom));
 }
 
 .tab-panel {
