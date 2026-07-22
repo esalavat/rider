@@ -127,12 +127,22 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
     costGrowth: 1.3,
     maxLevel: 30,
   },
+  {
+    id: "throttle_grip",
+    name: "Throttle Grip",
+    flavor: "White-knuckle grip. More muscle behind every twist.",
+    effect: "clickBonus",
+    valuePerLevel: 0.15,
+    baseCost: 1,
+    costGrowth: 1.3,
+    maxLevel: 30,
+  },
 ];
 
 export const MEMBER_INCOME_BONUS = 0.02;
 export const MEMBER_AUTO_RATE = 0.1;
-export const CLICK_BONUS_FLOOR = 10;
-export const CLICK_BONUS_INCOME_SHARE = 0.6;
+export const CLICK_BONUS_FLOOR = 2;
+export const CLICK_BONUS_INCOME_SHARE = 0.15;
 export const OFFLINE_CAP_SECONDS = 4 * 60 * 60;
 export const OFFLINE_EFFICIENCY = 0.5;
 

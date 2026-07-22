@@ -183,6 +183,16 @@ export function legacyIncomeMultiplier(state: GameState): number {
   return multiplier;
 }
 
+export function legacyClickMultiplier(state: GameState): number {
+  let multiplier = 1;
+  for (const upgrade of LEGACY_UPGRADES) {
+    if (upgrade.effect !== "clickBonus") continue;
+    const level = legacyLevel(state, upgrade);
+    multiplier *= Math.pow(1 + upgrade.valuePerLevel, level);
+  }
+  return multiplier;
+}
+
 export function chapterUnlocked(state: GameState, chapter: ChapterDef): boolean {
   return !!state.unlockedChapters[chapter.id];
 }
@@ -233,7 +243,8 @@ export function totalIncomePerSecond(state: GameState): number {
 
 export function clickBonus(state: GameState): number {
   const perSecond = totalIncomePerSecond(state);
-  return Math.max(CLICK_BONUS_FLOOR, perSecond * CLICK_BONUS_INCOME_SHARE);
+  const base = Math.max(CLICK_BONUS_FLOOR, perSecond * CLICK_BONUS_INCOME_SHARE);
+  return base * legacyClickMultiplier(state);
 }
 
 export function applyIncome(state: GameState, amount: number): GameState {

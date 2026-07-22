@@ -19,7 +19,7 @@ export type RacketIconId =
   | "smuggling"
   | "speedway";
 
-export type LegacyEffect = "income" | "recruitCost" | "startCash";
+export type LegacyEffect = "income" | "recruitCost" | "startCash" | "clickBonus";
 
 export type MemberTierIconId = "patch" | "officer";
 

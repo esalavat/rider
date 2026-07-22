@@ -112,6 +112,7 @@ Legacy upgrades (bought with Legend Points, cost = `baseCost * costGrowth^level`
 | Street Reputation | −recruit cost | 3% (floor 20% of original) | 1 | 1.4 | 25 |
 | Road Captain's Network | +income | 18% | 3 | 1.45 | 20 |
 | Nest Egg | +starting cash | $2,500 | 2 | 1.3 | 30 |
+| Throttle Grip | +throttle click bonus | 15% | 1 | 1.3 | 30 |
 
 ### Chapters (progression map)
 
@@ -156,7 +157,9 @@ totalIncomePerSecond =
 
 ### Manual click ("Twist the Throttle")
 
-`clickBonus = max(10, totalIncomePerSecond × 0.6)` — matters a lot at zero income, negligible once rackets are running. Intentional: gives new players something to do before the idle loop takes over.
+`clickBonus = max(CLICK_BONUS_FLOOR, totalIncomePerSecond × CLICK_BONUS_INCOME_SHARE) × legacyClickMultiplier`, where `CLICK_BONUS_FLOOR = $2` and `CLICK_BONUS_INCOME_SHARE = 0.15`, and `legacyClickMultiplier` is the product of `(1 + valuePerLevel)^level` across all `"clickBonus"`-effect legacy upgrades (currently just Throttle Grip).
+
+Deliberately weak: a first-pass version used `max(10, ... × 0.6)`, which let a single click at zero income buy the very first racket outright ($10 click vs. a $10 Scrap Yard) and let clicking scale to rival idle income forever at any stage. The current numbers keep the click a small early nudge — five taps to afford the first racket — and a minor, non-dominant boost once rackets are running. A player who wants to lean into active tapping can buy back some of that power over repeated prestiges via Throttle Grip.
 
 ### Offline progress
 

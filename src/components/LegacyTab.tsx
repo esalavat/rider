@@ -24,6 +24,8 @@ function effectLabel(upgrade: LegacyUpgradeDef): string {
       return `-${(upgrade.valuePerLevel * 100).toFixed(0)}% recruit cost / level`;
     case "startCash":
       return `+${formatCash(upgrade.valuePerLevel)} starting cash / level`;
+    case "clickBonus":
+      return `+${(upgrade.valuePerLevel * 100).toFixed(0)}% throttle click / level`;
   }
 }
 
