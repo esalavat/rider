@@ -14,16 +14,18 @@ const SUFFIXES = [
 ];
 
 export function formatNumber(value: number): string {
-  if (!Number.isFinite(value)) return "0";
+  if (Number.isNaN(value)) return "0";
+  if (!Number.isFinite(value)) return value > 0 ? "∞" : "-∞";
   const sign = value < 0 ? "-" : "";
   const abs = Math.abs(value);
   if (abs < 1000) {
     return sign + (Number.isInteger(abs) ? abs.toString() : abs.toFixed(1));
   }
-  const tier = Math.min(
-    Math.floor(Math.log10(abs) / 3),
-    SUFFIXES.length - 1
-  );
+  const tier = Math.floor(Math.log10(abs) / 3);
+  if (tier >= SUFFIXES.length) {
+    const [mantissa, exponent] = abs.toExponential(2).split("e");
+    return sign + mantissa + "e" + exponent.replace("+", "");
+  }
   const scaled = abs / Math.pow(1000, tier);
   const decimals = scaled < 10 ? 2 : scaled < 100 ? 1 : 0;
   return sign + scaled.toFixed(decimals) + SUFFIXES[tier];
