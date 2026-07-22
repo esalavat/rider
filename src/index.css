@@ -287,6 +287,14 @@ input {
   border-color: var(--rust);
 }
 
+.racket-card--locked {
+  opacity: 0.5;
+}
+
+.racket-card--locked .racket-card__icon {
+  color: var(--text-dim);
+}
+
 .racket-card__icon {
   width: 40px;
   height: 40px;
@@ -641,86 +649,174 @@ input {
   color: var(--text-dim);
 }
 
-.chapter-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.chapter-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 4px;
+.chapter-map-wrap {
   background: var(--bg-panel);
   border: 3px solid var(--ink);
-  border-radius: 6px;
-  box-shadow: var(--shadow-hard-sm);
-  padding: 12px 10px;
-  opacity: 0.75;
+  border-radius: 8px;
+  box-shadow: var(--shadow-hard);
+  padding: 8px;
+  overflow-x: auto;
 }
 
-.chapter-card--unlocked {
-  opacity: 1;
-  border-color: var(--chapter-accent, var(--gold));
+.chapter-map {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
 }
 
-.chapter-card__patch {
-  width: 44px;
-  height: 44px;
-  color: var(--chrome-dim);
+.chapter-map__landmass {
+  fill: var(--bg-panel-alt);
+  stroke: var(--ink);
+  stroke-width: 2;
+  opacity: 0.6;
 }
 
-.chapter-card--unlocked .chapter-card__patch {
+.chapter-map__road {
+  fill: none;
+  stroke: var(--bg-raised);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 2 12;
+}
+
+.chapter-map__road--active {
+  stroke: var(--chapter-accent, var(--gold));
+  stroke-dasharray: none;
+}
+
+.chapter-map__city {
+  cursor: pointer;
+}
+
+.chapter-map__city-bg {
+  fill: var(--bg-panel-alt);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.chapter-map__city--unlocked .chapter-map__city-bg {
+  fill: var(--bg-panel);
+  stroke: var(--chapter-accent, var(--gold));
+}
+
+.chapter-map__city--selected .chapter-map__city-bg {
+  stroke-width: 5;
+}
+
+.chapter-map__city-icon {
+  color: var(--text-dim);
+  overflow: visible;
+}
+
+.chapter-map__city-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.chapter-map__city--unlocked .chapter-map__city-icon {
   color: var(--chapter-accent, var(--gold));
 }
 
-.chapter-card__name {
+.chapter-map__city-label {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  fill: var(--text-dim);
+}
+
+.chapter-map__city--unlocked .chapter-map__city-label {
+  fill: var(--text);
+}
+
+.chapter-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg-panel);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: var(--shadow-hard);
+  padding: 16px;
+  margin-top: 10px;
+}
+
+.chapter-detail--unlocked {
+  border-color: var(--chapter-accent, var(--gold));
+}
+
+.chapter-detail__patch {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  color: var(--chrome-dim);
+}
+
+.chapter-detail--unlocked .chapter-detail__patch {
+  color: var(--chapter-accent, var(--gold));
+}
+
+.chapter-detail__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chapter-detail__name {
+  font-family: var(--font-display);
+  font-size: 20px;
   color: var(--text);
   letter-spacing: 0.5px;
 }
 
-.chapter-card__region {
-  font-size: 10px;
+.chapter-detail__region {
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-dim);
 }
 
-.chapter-card__flavor {
-  margin: 4px 0 0;
-  font-size: 11px;
+.chapter-detail__flavor {
+  margin: 6px 0 0;
+  font-size: 12px;
   color: var(--text-dim);
 }
 
-.chapter-card__bike {
+.chapter-detail__bike {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
-  font-size: 11px;
+  margin-top: 6px;
+  font-size: 12px;
   color: var(--chrome);
 }
 
-.chapter-card__bike-icon {
+.chapter-detail__bike-icon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
 }
 
-.chapter-card__bonus {
+.chapter-detail__bonus {
+  display: block;
+  margin-top: 6px;
   font-size: 12px;
   color: var(--success);
   font-variant-numeric: tabular-nums;
 }
 
-.chapter-card__unlock {
-  margin-top: 6px;
+.chapter-detail__unlock {
+  margin-top: 8px;
   min-width: 0;
   width: 100%;
+}
+
+.chapter-detail__hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 /* Danger zone */

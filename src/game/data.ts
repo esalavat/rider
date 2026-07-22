@@ -154,7 +154,6 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     baseCost: 2000,
     costGrowth: 1.14,
     weight: 20,
-    requires: "prospect",
   },
   {
     id: "road_captain",
@@ -164,7 +163,6 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     baseCost: 100000,
     costGrowth: 1.15,
     weight: 400,
-    requires: "patched",
   },
   {
     id: "sergeant",
@@ -174,7 +172,6 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     baseCost: 6000000,
     costGrowth: 1.16,
     weight: 8000,
-    requires: "road_captain",
   },
   {
     id: "vice_president",
@@ -184,7 +181,6 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     baseCost: 400000000,
     costGrowth: 1.17,
     weight: 160000,
-    requires: "sergeant",
   },
   {
     id: "chapter_president",
@@ -194,7 +190,6 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     baseCost: 32000000000,
     costGrowth: 1.18,
     weight: 3200000,
-    requires: "vice_president",
   },
   {
     id: "national_president",
@@ -204,10 +199,16 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     baseCost: 3000000000000,
     costGrowth: 1.19,
     weight: 64000000,
-    requires: "chapter_president",
   },
 ];
 
+/**
+ * City/road layout for the fictional route map (an invented landmass, not the
+ * real world). Coordinates live in an SVG viewBox of "0 0 340 950", laid out
+ * as a zigzag snaking south so the route reads top-to-bottom on a mobile
+ * viewport. Order in this array is the unlock order — the route is strictly
+ * linear, city N+1 always comes right after city N.
+ */
 export const CHAPTERS: ChapterDef[] = [
   {
     id: "rust_hollow",
@@ -215,10 +216,13 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Rust Belt",
     flavor: "Shuttered mills and cheap gas. Nobody asks questions here.",
     bikeName: "Rust Hollow Bobber",
-    unlockCost: 5,
+    unlockCost: 10,
     bonus: 0.05,
     accent: "#d9662b",
     patch: "gear",
+    unlocksTier: "patched",
+    mapX: 90,
+    mapY: 70,
   },
   {
     id: "salt_flats",
@@ -226,10 +230,13 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Desert Southwest",
     flavor: "Flat, white, and endless. Built for opening the throttle.",
     bikeName: "Salt Flats Chopper",
-    unlockCost: 15,
+    unlockCost: 75,
     bonus: 0.05,
     accent: "#e4b243",
     patch: "sun",
+    unlocksTier: "road_captain",
+    mapX: 250,
+    mapY: 180,
   },
   {
     id: "pine_ridge",
@@ -237,10 +244,13 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Pacific Northwest",
     flavor: "Switchbacks through the timber, rain or shine.",
     bikeName: "Pine Ridge Enduro",
-    unlockCost: 40,
+    unlockCost: 500,
     bonus: 0.05,
     accent: "#5a8a5a",
     patch: "pine",
+    unlocksTier: "sergeant",
+    mapX: 90,
+    mapY: 290,
   },
   {
     id: "bayou_crossing",
@@ -248,10 +258,13 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Deep South",
     flavor: "Humid nights, slow water, and a clubhouse on stilts.",
     bikeName: "Bayou Crossing Cruiser",
-    unlockCost: 100,
+    unlockCost: 4000,
     bonus: 0.05,
     accent: "#4a8a94",
     patch: "moon",
+    unlocksTier: "vice_president",
+    mapX: 250,
+    mapY: 400,
   },
   {
     id: "copper_canyon",
@@ -259,10 +272,13 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Southwest Mesa",
     flavor: "Switchback roads carved into red rock.",
     bikeName: "Copper Canyon Scrambler",
-    unlockCost: 250,
+    unlockCost: 30000,
     bonus: 0.05,
     accent: "#b5651d",
     patch: "mesa",
+    unlocksTier: "chapter_president",
+    mapX: 90,
+    mapY: 510,
   },
   {
     id: "steel_harbor",
@@ -270,10 +286,13 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Coastal Port",
     flavor: "Shipping cranes and salt air. Freight moves both ways.",
     bikeName: "Steel Harbor Cafe Racer",
-    unlockCost: 600,
+    unlockCost: 200000,
     bonus: 0.05,
     accent: "#7d8c99",
     patch: "anchor",
+    unlocksTier: "national_president",
+    mapX: 250,
+    mapY: 620,
   },
   {
     id: "wildfire_mesa",
@@ -281,10 +300,12 @@ export const CHAPTERS: ChapterDef[] = [
     region: "High Desert Badlands",
     flavor: "Scorched earth and open highway to the horizon.",
     bikeName: "Wildfire Mesa Streetfighter",
-    unlockCost: 1500,
-    bonus: 0.05,
+    unlockCost: 1000000,
+    bonus: 0.2,
     accent: "#a3222b",
     patch: "flame",
+    mapX: 90,
+    mapY: 730,
   },
   {
     id: "vultures_rest",
@@ -292,9 +313,13 @@ export const CHAPTERS: ChapterDef[] = [
     region: "National Chapter",
     flavor: "Where it all started. Every road leads back here.",
     bikeName: "Vulture's Rest Road King",
-    unlockCost: 4000,
-    bonus: 0.1,
+    unlockCost: 5000000,
+    bonus: 0.3,
     accent: "#8a5aa0",
     patch: "wings",
+    mapX: 250,
+    mapY: 840,
   },
 ];
+
+export const CHAPTER_MAP_VIEWBOX = { width: 340, height: 950 };

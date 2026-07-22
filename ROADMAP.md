@@ -6,8 +6,8 @@ Tracks what's actually built vs. still planned, plus a running log of notable bu
 
 - Live at `https://esalavat.github.io/rider/`, auto-deployed from `main` via GitHub Actions
 - Current save schema version: **4**
-- All of Phase 1–3 below are shipped and live
-- **Next up: Phase 4 (recruit tier gating + chapter map rework)**, not yet implemented — Phase 5 (racket bosses) is on hold behind it
+- All of Phase 1–4 below are shipped and live
+- **Next up: Phase 5 (racket bosses)**, on hold behind an open design question — see "Open design questions" in `GAME_DESIGN.md`
 
 ## Phases
 
@@ -18,14 +18,15 @@ Tracks what's actually built vs. still planned, plus a running log of notable bu
 - ✅ **Number formatting fix** — see "Notable fixes" below
 - ✅ **Phase 3 — Chapter map** — 8 collectible chapters with unique patches/bikes, Legend-Point-gated, permanent stacking bonus
 - ✅ **Reset Progress button** — Legacy tab, confirm-gated, wired up the previously-unused `hardReset`
-- ⬜ **Phase 4 — Recruit tier gating + chapter map rework** (not started, next up). Three parts, all in `GAME_DESIGN.md`'s Members and Chapters sections:
-  1. Only Prospect is purchasable from the start; Patched Member and above are locked until their gating chapter is chartered
-  2. Chapters 1-6 each unlock the next Member tier instead of just granting a small income bonus; chapters 7-8 (no tier left to gate) get bigger income bonuses instead; all 8 chapter costs are steepened to scale with the power of the tier they unlock
-  3. `ChaptersTab.tsx`'s card grid is replaced with a fictional (non-real-world) SVG route map — cities connected by roads, both lighting up as chapters are chartered
+- ✅ **Phase 4 — Recruit tier gating + chapter map rework**. Three parts, all in `GAME_DESIGN.md`'s Members and Chapters sections:
+  1. Only Prospect is purchasable from the start; Patched Member and above show a locked teaser card ("Charter X to unlock") until their gating chapter is chartered. Chosen over fully hiding the row so the goal stays visible — see the now-resolved "Locked-tier UX" open question.
+  2. Chapters 1-6 each unlock the next Member tier (via a new `ChapterDef.unlocksTier` field) instead of just granting a small income bonus; chapters 7-8 (no tier left to gate) carry bigger income bonuses (+20%/+30%) instead; all 8 chapter costs steepened to 10/75/500/4,000/30,000/200,000/1,000,000/5,000,000 LP
+  3. `ChaptersTab.tsx`'s card grid is replaced with a fictional (non-real-world) SVG route map — a zigzag "road" of 8 city pins on an invented landmass, drawn from static `mapX`/`mapY`/`unlocksTier` fields added to `ChapterDef` in `data.ts`. Locked cities show a lock icon and "???"; tapping any pin opens an inline detail panel below the map with flavor, cost, and the Charter button.
+  4. Added as part of this phase (not explicitly spelled out in the original plan, but required for the map's "no later city unlocks before an earlier one" invariant to actually hold): `canUnlockChapter` now also requires the previous chapter in the list to already be chartered, enforcing strictly-sequential unlocking.
 
   Motivated by a real pacing bug found in testing: a ~1-minute play session (a couple Patched Members, one Road Captain) left idle overnight produced a first-ever prestige worth 13,000,000 Legend Points, before the player had ever prestiged once. Root cause: the member producer chain compounds continuously and was reachable with almost no investment. See "Why tiers are chapter-gated" in `GAME_DESIGN.md` for the full writeup, including a residual-risk note for later stages.
 
-  Implementation note: tier-gating and the map's unlocked/locked state can both be derived entirely from the existing `state.unlockedChapters` — no new persisted field, so this phase likely needs **no save version bump**. The map's city/road layout (coordinates, connections) is static content that belongs in `data.ts`, not saved state.
+  Implementation note: tier-gating and the map's unlocked/locked state are both derived from the existing `state.unlockedChapters` — no new persisted field, so this phase needed **no save version bump**, as anticipated. Member tier gating is now looked up via `memberTierGatingChapter()` in `engine.ts` (finds the chapter whose `unlocksTier` matches), replacing the old `MemberTierDef.requires` (previous-tier-owned) gate, which is removed. Verified via `chrome-devtools` MCP at 390×844: locked/unlocked states, sequential-unlock enforcement, and the map/detail-panel sync all behave as designed.
 - ⬜ **Phase 5 — Racket bosses** (stretch goal, on hold behind Phase 4, not started) — see design section in `GAME_DESIGN.md`. Blocked on the open question of whether an assigned boss leaves the general member pool.
 - ⬜ **Quality-of-life shop** (not started) — auto-buy toggle, bulk-buy stepper, extended offline-cap tiers, compact-notation toggle. See `GAME_DESIGN.md` for the list.
 - ⬜ **App store submission** (not started) — see "Before submitting to app stores" below

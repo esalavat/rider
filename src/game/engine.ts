@@ -126,12 +126,17 @@ export function memberTierOwned(state: GameState, tier: MemberTierDef): number {
   return state.memberTiers[tier.id] ?? 0;
 }
 
+export function memberTierGatingChapter(tier: MemberTierDef): ChapterDef | undefined {
+  return CHAPTERS.find((c) => c.unlocksTier === tier.id);
+}
+
 export function memberTierIsUnlocked(
   state: GameState,
   tier: MemberTierDef
 ): boolean {
-  if (!tier.requires) return true;
-  return (state.memberTiers[tier.requires] ?? 0) > 0;
+  const gatingChapter = memberTierGatingChapter(tier);
+  if (!gatingChapter) return true;
+  return !!state.unlockedChapters[gatingChapter.id];
 }
 
 export function memberTierCost(
@@ -182,8 +187,15 @@ export function chapterUnlocked(state: GameState, chapter: ChapterDef): boolean 
   return !!state.unlockedChapters[chapter.id];
 }
 
+export function chapterIndex(chapter: ChapterDef): number {
+  return CHAPTERS.findIndex((c) => c.id === chapter.id);
+}
+
 export function canUnlockChapter(state: GameState, chapter: ChapterDef): boolean {
-  return !chapterUnlocked(state, chapter) && state.legendPoints >= chapter.unlockCost;
+  if (chapterUnlocked(state, chapter)) return false;
+  const prev = CHAPTERS[chapterIndex(chapter) - 1];
+  if (prev && !chapterUnlocked(state, prev)) return false;
+  return state.legendPoints >= chapter.unlockCost;
 }
 
 export function unlockChapter(state: GameState, chapter: ChapterDef): GameState {

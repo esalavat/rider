@@ -5,12 +5,13 @@ import {
   memberMultiplier,
   memberRank,
   memberTierCost,
+  memberTierGatingChapter,
   memberTierIsUnlocked,
   memberTierOwned,
   totalMembers,
 } from "../game/engine";
 import type { GameState, MemberTierDef } from "../game/types";
-import { OfficerPatchIcon, PatchIcon } from "./icons";
+import { LockIcon, OfficerPatchIcon, PatchIcon } from "./icons";
 
 interface RecruitsTabProps {
   state: GameState;
@@ -37,7 +38,26 @@ export function RecruitsTab({ state, onBuy, onBuyMax }: RecruitsTabProps) {
       <div className="racket-list">
         {MEMBER_TIERS.map((tier, index) => {
           const unlocked = memberTierIsUnlocked(state, tier);
-          if (!unlocked) return null;
+          if (!unlocked) {
+            const gatingChapter = memberTierGatingChapter(tier);
+            return (
+              <div key={tier.id} className="racket-card racket-card--locked">
+                <div className="racket-card__icon">
+                  <LockIcon />
+                </div>
+                <div className="racket-card__body">
+                  <div className="racket-card__top">
+                    <span className="racket-card__name">{tier.name}</span>
+                  </div>
+                  <p className="racket-card__flavor">
+                    {gatingChapter
+                      ? `Charter ${gatingChapter.name} to unlock.`
+                      : "Locked."}
+                  </p>
+                </div>
+              </div>
+            );
+          }
           const owned = memberTierOwned(state, tier);
           const cost = memberTierCost(state, tier);
           const affordable = state.cash >= cost;

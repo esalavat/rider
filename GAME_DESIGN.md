@@ -211,8 +211,11 @@ Auto-buy-cheapest toggle, a bulk-buy stepper (x1/x10/x25/Max) as an alternative 
 
 ## Open design questions
 
-- **Chapter costs** (10 / 75 / 500 / 4,000 / 30,000 / 200,000 / 1,000,000 / 5,000,000 LP): first-pass numbers, not validated against real play. Needs tuning once tier-gating ships — see the Chapters section.
-- **Locked-tier UX**: should a not-yet-unlocked Member tier be fully hidden (matches the current racket-unlock pattern), or shown as a visible "locked" teaser card naming which chapter unlocks it, to motivate progress toward that chapter? Product decision, not just a data one.
-- **Map interaction**: should tapping a city on the chapter map open an inline detail panel or a modal? Decide at implementation time based on what fits the mobile layout best.
-- **Racket bosses** (Phase 5, on hold behind the recruit/chapter rework): should an assigned boss be pulled out of the general member pool (reducing `effectiveMemberWeight`) while assigned, or just tagged as a bonus without being removed? Affects balance and needs a decision before implementing.
+- **Chapter costs** (10 / 75 / 500 / 4,000 / 30,000 / 200,000 / 1,000,000 / 5,000,000 LP): now implemented and gating is live, but still not validated against real play — revisit if playtesting shows any stretch feels too long or too short.
+- **Racket bosses** (Phase 5, on hold): should an assigned boss be pulled out of the general member pool (reducing `effectiveMemberWeight`) while assigned, or just tagged as a bonus without being removed? Affects balance and needs a decision before implementing.
 - No backend/server-side features are planned — leaderboards, cloud save, or accounts would all require picking a backend, which is a deliberate non-goal for now (100% local-only by design). Revisit only if there's a real reason to.
+
+Resolved during Phase 4 implementation:
+- **Locked-tier UX** → shown as a dimmed "locked" teaser card naming the gating chapter (`RecruitsTab.tsx`), not fully hidden, so the goal stays visible.
+- **Map interaction** → tapping a city opens an inline detail panel below the map (`ChaptersTab.tsx`), not a modal.
+- **Sequential chapter unlocking** → `canUnlockChapter` now also requires the previous chapter already chartered, so the map's "no later city unlocks before an earlier one" claim actually holds instead of being merely likely.

@@ -166,6 +166,17 @@ export function ThrottleIcon({ className }: IconProps) {
   );
 }
 
+export function LockIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} {...base}>
+      <rect x="12" y="22" width="24" height="18" rx="2" />
+      <path d="M16 22v-6a8 8 0 0116 0v6" />
+      <circle cx="24" cy="30" r="2.5" fill="currentColor" stroke="none" />
+      <path d="M24 32.5v4" />
+    </svg>
+  );
+}
+
 export function MapPinIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 48 48" className={className} {...base}>

@@ -31,7 +31,6 @@ export interface MemberTierDef {
   baseCost: number;
   costGrowth: number;
   weight: number;
-  requires?: string;
 }
 
 export interface LegacyUpgradeDef {
@@ -65,6 +64,11 @@ export interface ChapterDef {
   bonus: number;
   accent: string;
   patch: ChapterPatchId;
+  /** Member tier id this chapter unlocks, if any (chapters 1-6 gate a tier; 7-8 don't). */
+  unlocksTier?: string;
+  /** Position on the fictional route map's SVG coordinate space. */
+  mapX: number;
+  mapY: number;
 }
 
 export interface GameState {
