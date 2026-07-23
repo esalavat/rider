@@ -78,14 +78,14 @@ Recruits tab is a tiered auto-producing chain, not a flat counter. Each tier is 
 | Tier | Weight | Base cost | Cost growth | Unlocked by |
 |---|---|---|---|---|
 | Prospect | 1 | 50 | 1.13 | available from the start |
-| Patched Member | 20 | 2,000 | 1.35 | Chapter 1 — Rust Hollow |
-| Road Captain | 400 | 100,000 | 1.36 | Chapter 2 — Salt Flats |
-| Sergeant at Arms | 8,000 | 6,000,000 | 1.37 | Chapter 3 — Pine Ridge |
-| Vice President | 160,000 | 400,000,000 | 1.38 | Chapter 4 — Bayou Crossing |
-| Chapter President | 3,200,000 | 32,000,000,000 | 1.39 | Chapter 5 — Copper Canyon |
-| National President | 64,000,000 | 3,000,000,000,000 | 1.40 | Chapter 6 — Steel Harbor |
+| Patched Member | 20 | 2,000 | 1.22 | Chapter 1 — Rust Hollow |
+| Road Captain | 400 | 100,000 | 1.23 | Chapter 2 — Salt Flats |
+| Sergeant at Arms | 8,000 | 6,000,000 | 1.24 | Chapter 3 — Pine Ridge |
+| Vice President | 160,000 | 400,000,000 | 1.25 | Chapter 4 — Bayou Crossing |
+| Chapter President | 3,200,000 | 32,000,000,000 | 1.26 | Chapter 5 — Copper Canyon |
+| National President | 64,000,000 | 3,000,000,000,000 | 1.27 | Chapter 6 — Steel Harbor |
 
-Global income bonus from members = `1 + (Σ owned_i × weight_i) × 0.004`. Weights make higher tiers matter far more than raw headcount — deliberate, so the auto-chain doesn't trivialize the multiplier via sheer Prospect volume. Prospect's own cost growth (1.13) is untouched — it's the only tier active before Chapter 1 and two rounds of playtesting confirmed that early ramp already feels right. Every gated tier's cost growth is now substantially steeper (~1.35-1.40, up from the original 1.14-1.19) and the income bonus has been cut 80% from its original 0.02, specifically to blunt how fast a freshly-unlocked tier can be bought in bulk with a sudden windfall of cash — see "Why tiers are chapter-gated" below for the incident that motivated this, and its second round.
+Global income bonus from members = `1 + effectiveWeight(Σ owned_i × weight_i) × MEMBER_INCOME_BONUS` (`0.008`), where `effectiveWeight` is a **soft cap**, not the raw sum directly — see "Structural fix: logarithmic soft cap on member weight" below. Weights make higher tiers matter far more than raw headcount — deliberate, so the auto-chain doesn't trivialize the multiplier via sheer Prospect volume. Prospect's own cost growth (1.13) is untouched — it's the only tier active before Chapter 1 and multiple rounds of playtesting confirmed that early ramp already feels right. Gated-tier cost growth sits at 1.22-1.27 — steeper than the original 1.14-1.19, but rolled back from a since-abandoned 1.35-1.40 spike once the soft cap took over as the primary anti-runaway mechanism (see below).
 
 Club "rank" shown in the header = the name of the highest tier with ≥1 owned. Not gated by a headcount threshold — tied to which tier you've started.
 
@@ -99,7 +99,20 @@ Gating Patched Member and above behind chapters means a new player can only grow
 
 **This predicted risk did resurface, one tier early — twice.** Real playtesting after Phase 4 shipped: the first prestige (Prospect-only, no chapters) took ~10 minutes and felt right. But the moment Chapter 1 unlocked Patched Member (weight 20, a 20x jump over Prospect's weight of 1), income exploded — the player could charter 3 more chapters within ~5 minutes, then everything remaining (all 8 chapters, every legacy upgrade maxed) within another ~5. Root cause: `memberMultiplier` is linear in owned count but recruit-tier cost growth (1.14–1.19) was gentle enough that, once cash started climbing, buying more of the newly-unlocked high-weight tier stayed cheap relative to the income it unlocked — a self-reinforcing loop with a doubling time of seconds rather than minutes.
 
-First fix attempt: raised gated-tier cost growth to 1.22–1.27 and cut `MEMBER_INCOME_BONUS` from 0.02 to 0.008, plus a much steeper first-pass chapter-cost curve. **Not enough** — round two of playtesting confirmed the pre-Chapter-1 pacing was now solid (two prestiges, ~10 min each, matching the ~20-30 min Chapter 1 target), but Chapter 2 (300 LP at the time) still fell in "only a few minutes" once Patched Member was live — still roughly a 30-50x jump in Legend-Point earn rate the moment that tier unlocked. Pushed both levers much further for round two: gated-tier cost growth raised again to 1.35–1.40, and `MEMBER_INCOME_BONUS` cut again to 0.004 (80% below the original 0.02). Chapter costs were also re-steepened again — see the Chapters section. Both levers keep moving in the same direction each round; if a third round is needed, that's the signal to consider a structurally different fix (e.g. a diminishing-returns curve on multiplier-per-unit at high owned counts) rather than continuing to push these same two constants further.
+First fix attempt: raised gated-tier cost growth to 1.22–1.27 and cut `MEMBER_INCOME_BONUS` from 0.02 to 0.008, plus a much steeper first-pass chapter-cost curve. **Not enough** — round two of playtesting confirmed the pre-Chapter-1 pacing was now solid (two prestiges, ~10 min each, matching the ~20-30 min Chapter 1 target), but Chapter 2 (300 LP at the time) still fell in "only a few minutes" once Patched Member was live — still roughly a 30-50x jump in Legend-Point earn rate the moment that tier unlocked. Second attempt pushed the same two levers much further (cost growth to 1.35–1.40, bonus to 0.004) plus a much steeper chapter curve — untested before a better idea arrived.
+
+#### Structural fix: logarithmic soft cap on member weight
+
+Two rounds of pushing cost growth and `MEMBER_INCOME_BONUS` in the same direction was a sign those constants were fighting a losing battle: `memberMultiplier` was **linear** in raw weight (`Σ owned_i × weight_i`), so no matter how steep the cost curve got, a big enough cash windfall reinvested into a newly-unlocked high-weight tier could always eventually buy enough units to spike the multiplier — cost curves only changed *how much* cash it took, never capped the payoff itself. The actual fix: `effectiveMemberWeight()` in `engine.ts` now applies a **soft cap** to the raw sum — linear and completely unchanged below `MEMBER_WEIGHT_SOFT_CAP` (200), logarithmic above it:
+
+```
+raw ≤ 200:  effectiveWeight = raw                                    (unchanged)
+raw > 200:  effectiveWeight = 200 + 200 × ln(1 + (raw − 200) / 200)   (soft cap)
+```
+
+Below the cap, behavior is byte-for-byte identical to the old linear formula, so the validated-good pre-Chapter-1 pacing (raw weight from Prospects alone rarely exceeds ~200 in a single ~10-minute run, since prestige resets member counts) is untouched. Above it, each additional unit of weight buys a rapidly shrinking sliver of effective weight: at raw weight 5,000 the multiplier reaches only ~7.8x instead of the old uncapped ~101x; at raw weight 1,000,000 (an absurd burst-buy) it's ~16.2x instead of ~20,001x. This is what actually stops the "cash windfall → buy a pile of the newly-unlocked tier → multiplier spikes → even more cash" loop, regardless of cost curve — no amount of cash can push effective weight past a slow logarithmic climb.
+
+With the soft cap now doing the structural work, gated-tier cost growth and `MEMBER_INCOME_BONUS` were rolled back from their round-two panic-tuned values (1.35–1.40 / 0.004) to round-one's more modest ones (1.22–1.27 / 0.008) — the soft cap should no longer need help from such extreme constants. Chapter costs (see the Chapters section) were left at their round-two values as a conservative buffer, since they're a partially independent lever (total LP *threshold*, not earn *rate*) serving the separate, explicit design goal of a long late game — if they now feel too slow given the tamed economy, that's a much better problem to have than a third "still too fast" report, and an easy one to fix by lowering them.
 
 ### Legacy / Prestige ("Go Legendary")
 

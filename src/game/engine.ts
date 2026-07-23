@@ -6,6 +6,7 @@ import {
   MEMBER_AUTO_RATE,
   MEMBER_INCOME_BONUS,
   MEMBER_TIERS,
+  MEMBER_WEIGHT_SOFT_CAP,
   RACKET_MILESTONE_BONUS,
   RACKET_MILESTONE_COST_MULTIPLIER,
   RACKET_MILESTONES,
@@ -154,10 +155,28 @@ export function totalMembers(state: GameState): number {
   return MEMBER_TIERS.reduce((sum, t) => sum + memberTierOwned(state, t), 0);
 }
 
-export function effectiveMemberWeight(state: GameState): number {
+export function rawMemberWeight(state: GameState): number {
   return MEMBER_TIERS.reduce(
     (sum, t) => sum + memberTierOwned(state, t) * t.weight,
     0
+  );
+}
+
+/**
+ * Raw weight grows linearly (unchanged) below MEMBER_WEIGHT_SOFT_CAP, then
+ * logarithmically above it. A burst-bought pile of a newly-unlocked
+ * high-weight tier can push raw weight up by many hundreds or thousands in
+ * seconds, but once past the cap each additional unit of weight buys a
+ * rapidly shrinking sliver of effective weight — no cost curve has to fight
+ * that alone anymore.
+ */
+export function effectiveMemberWeight(state: GameState): number {
+  const raw = rawMemberWeight(state);
+  if (raw <= MEMBER_WEIGHT_SOFT_CAP) return raw;
+  const excess = raw - MEMBER_WEIGHT_SOFT_CAP;
+  return (
+    MEMBER_WEIGHT_SOFT_CAP +
+    MEMBER_WEIGHT_SOFT_CAP * Math.log(1 + excess / MEMBER_WEIGHT_SOFT_CAP)
   );
 }
 

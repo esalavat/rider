@@ -139,7 +139,17 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
   },
 ];
 
-export const MEMBER_INCOME_BONUS = 0.004;
+export const MEMBER_INCOME_BONUS = 0.008;
+/**
+ * Raw member weight (Σ owned × tier weight) grows linearly below this and
+ * logarithmically above it — see effectiveMemberWeight() in engine.ts. This
+ * is the structural fix for the runaway that used to happen the moment a
+ * high-weight tier unlocked and a cash windfall bought a burst of them: no
+ * amount of cash can push the multiplier past a slow logarithmic climb once
+ * raw weight crosses this threshold, so cost curves no longer have to do
+ * all the anti-runaway work by themselves.
+ */
+export const MEMBER_WEIGHT_SOFT_CAP = 200;
 export const MEMBER_AUTO_RATE = 0.1;
 export const CLICK_BONUS_FLOOR = 2;
 export const CLICK_BONUS_INCOME_SHARE = 0.15;
@@ -162,7 +172,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Earned the colors. Brings in prospects on their own.",
     icon: "patch",
     baseCost: 2000,
-    costGrowth: 1.35,
+    costGrowth: 1.22,
     weight: 20,
   },
   {
@@ -171,7 +181,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Runs the recruiting routes, chapter to chapter.",
     icon: "officer",
     baseCost: 100000,
-    costGrowth: 1.36,
+    costGrowth: 1.23,
     weight: 400,
   },
   {
@@ -180,7 +190,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Keeps the peace, keeps the ranks growing.",
     icon: "officer",
     baseCost: 6000000,
-    costGrowth: 1.37,
+    costGrowth: 1.24,
     weight: 8000,
   },
   {
@@ -189,7 +199,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Second in command, building the bench.",
     icon: "officer",
     baseCost: 400000000,
-    costGrowth: 1.38,
+    costGrowth: 1.25,
     weight: 160000,
   },
   {
@@ -198,7 +208,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Runs the chapter. Every rider answers to them.",
     icon: "officer",
     baseCost: 32000000000,
-    costGrowth: 1.39,
+    costGrowth: 1.26,
     weight: 3200000,
   },
   {
@@ -207,7 +217,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "The name on every chapter's charter.",
     icon: "officer",
     baseCost: 3000000000000,
-    costGrowth: 1.40,
+    costGrowth: 1.27,
     weight: 64000000,
   },
 ];
