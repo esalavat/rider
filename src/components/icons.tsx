@@ -182,6 +182,15 @@ export function ThrottleIcon({ className }: IconProps) {
   );
 }
 
+export function CloseIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} {...base}>
+      <path d="M12 12l24 24" />
+      <path d="M36 12L12 36" />
+    </svg>
+  );
+}
+
 export function LockIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 48 48" className={className} {...base}>

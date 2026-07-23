@@ -5,6 +5,7 @@ import { canUnlockChapter, chapterUnlocked } from "../game/engine";
 import type { ChapterDef, GameState } from "../game/types";
 import {
   ChapterPatchIcon,
+  CloseIcon,
   LockIcon,
   MapPinIcon,
   ScrapyardIcon,
@@ -41,14 +42,26 @@ interface PopoverPos {
   placement: "above" | "below";
 }
 
+// Ordered top-to-bottom as laid out on the map, used to keep the popover from
+// covering whichever marker sits immediately before/after the selected one.
+const MAP_NODES: { mapX: number; mapY: number }[] = [CHAPTER_MAP_HOME, ...CHAPTERS];
+
 export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    const frontier =
+      CHAPTERS.find((c) => !chapterUnlocked(state, c)) ?? CHAPTERS[CHAPTERS.length - 1];
+    return frontier.id;
+  });
   const unlockedCount = CHAPTERS.filter((c) => chapterUnlocked(state, c)).length;
   const isHomeSelected = selectedId === "home";
 
   const frontierChapter =
     CHAPTERS.find((c) => !chapterUnlocked(state, c)) ?? CHAPTERS[CHAPTERS.length - 1];
-  const selected = CHAPTERS.find((c) => c.id === selectedId) ?? frontierChapter;
+  const selectedChapter =
+    selectedId !== null && selectedId !== "home"
+      ? CHAPTERS.find((c) => c.id === selectedId)
+      : undefined;
+  const selected = selectedChapter ?? frontierChapter;
   const selectedUnlocked = chapterUnlocked(state, selected);
   const selectedIndex = CHAPTERS.findIndex((c) => c.id === selected.id);
   const prevChapter = CHAPTERS[selectedIndex - 1];
@@ -59,6 +72,10 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
     : undefined;
 
   const anchor = isHomeSelected ? CHAPTER_MAP_HOME : selected;
+  const anchorNodeIndex = isHomeSelected ? 0 : selectedIndex + 1;
+  const prevNode = anchorNodeIndex > 0 ? MAP_NODES[anchorNodeIndex - 1] : null;
+  const nextNode = anchorNodeIndex < MAP_NODES.length - 1 ? MAP_NODES[anchorNodeIndex + 1] : null;
+  const isOpen = selectedId !== null;
   const mapWrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -67,33 +84,78 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
   useLayoutEffect(() => {
     const wrap = mapWrapRef.current;
     const svg = svgRef.current;
-    if (!wrap || !svg) return;
+    if (!wrap || !svg || !isOpen) {
+      setPopoverPos(null);
+      return;
+    }
 
     function compute(): PopoverPos {
       const height = popoverRef.current?.offsetHeight || POPOVER_ESTIMATED_HEIGHT;
       const wrapRect = wrap!.getBoundingClientRect();
       const svgRect = svg!.getBoundingClientRect();
       const scale = svgRect.width / CHAPTER_MAP_VIEWBOX.width;
-      const anchorX = svgRect.left - wrapRect.left + anchor.mapX * scale;
-      const anchorY = svgRect.top - wrapRect.top + anchor.mapY * scale;
+      const toPx = (node: { mapX: number; mapY: number }) => ({
+        x: svgRect.left - wrapRect.left + node.mapX * scale,
+        y: svgRect.top - wrapRect.top + node.mapY * scale,
+      });
+      const anchorPx = toPx(anchor);
 
       const maxLeft = Math.max(POPOVER_MARGIN, wrapRect.width - POPOVER_WIDTH - POPOVER_MARGIN);
-      const left = Math.min(Math.max(anchorX - POPOVER_WIDTH / 2, POPOVER_MARGIN), maxLeft);
-      const arrowLeft = Math.min(Math.max(anchorX - left, 20), POPOVER_WIDTH - 20);
+      const left = Math.min(Math.max(anchorPx.x - POPOVER_WIDTH / 2, POPOVER_MARGIN), maxLeft);
+      const arrowLeft = Math.min(Math.max(anchorPx.x - left, 20), POPOVER_WIDTH - 20);
 
-      const belowTop = anchorY + MARKER_FOOTPRINT_BELOW * scale + POPOVER_ARROW_GAP;
-      if (belowTop + height <= wrapRect.height - POPOVER_MARGIN) {
+      // Cap how far the popover can extend toward the previous/next marker on
+      // the route so it previews the selected city without burying a neighbor.
+      const belowLimit = Math.min(
+        wrapRect.height - POPOVER_MARGIN,
+        nextNode
+          ? toPx(nextNode).y - MARKER_FOOTPRINT_ABOVE * scale - POPOVER_ARROW_GAP
+          : Infinity
+      );
+      const aboveLimit = Math.max(
+        POPOVER_MARGIN,
+        prevNode ? toPx(prevNode).y + MARKER_FOOTPRINT_BELOW * scale + POPOVER_ARROW_GAP : -Infinity
+      );
+
+      const belowTop = anchorPx.y + MARKER_FOOTPRINT_BELOW * scale + POPOVER_ARROW_GAP;
+      if (belowTop + height <= belowLimit) {
         return { left, top: belowTop, arrowLeft, placement: "below" };
       }
-      const aboveTop = anchorY - MARKER_FOOTPRINT_ABOVE * scale - POPOVER_ARROW_GAP - height;
-      return { left, top: Math.max(aboveTop, POPOVER_MARGIN), arrowLeft, placement: "above" };
+      const aboveTop = anchorPx.y - MARKER_FOOTPRINT_ABOVE * scale - POPOVER_ARROW_GAP - height;
+      if (aboveTop >= aboveLimit) {
+        return { left, top: aboveTop, arrowLeft, placement: "above" };
+      }
+
+      // Neither direction fully clears its neighbor along the route (a tight
+      // gap, e.g. Clubhouse to Rust Hollow) — the popover is taller than the
+      // room between the two markers, so vertical placement alone can't win.
+      // Fall back to sliding it sideways, away from whichever marker it would
+      // otherwise sit on top of, since the two are rarely at the same X.
+      const belowRoom = belowLimit - belowTop;
+      const aboveRoom = aboveTop - aboveLimit;
+      const placement: "above" | "below" = aboveRoom > belowRoom ? "above" : "below";
+      const conflictNode = placement === "above" ? prevNode : nextNode;
+      const top = Math.max(placement === "above" ? aboveTop : belowTop, POPOVER_MARGIN);
+
+      if (!conflictNode) {
+        return { left, top, arrowLeft, placement };
+      }
+      const conflictX = toPx(conflictNode).x;
+      const clearance = MARKER_FOOTPRINT_BELOW * scale;
+      const biasedLeft =
+        conflictX < anchorPx.x
+          ? Math.min(maxLeft, conflictX + clearance)
+          : Math.max(POPOVER_MARGIN, conflictX - clearance - POPOVER_WIDTH);
+      const finalLeft = Math.min(Math.max(biasedLeft, POPOVER_MARGIN), maxLeft);
+      const finalArrowLeft = Math.min(Math.max(anchorPx.x - finalLeft, 20), POPOVER_WIDTH - 20);
+      return { left: finalLeft, top, arrowLeft: finalArrowLeft, placement };
     }
 
     setPopoverPos(compute());
     const onResize = () => setPopoverPos(compute());
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [anchor.mapX, anchor.mapY, selectedUnlocked, affordable, prevLocked]);
+  }, [isOpen, anchor.mapX, anchor.mapY, prevNode, nextNode, selectedUnlocked, affordable, prevLocked]);
 
   return (
     <div className="tab-panel">
@@ -164,7 +226,7 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
             }`}
             style={{ "--chapter-accent": "var(--chrome)" } as CSSProperties}
             transform={`translate(${CHAPTER_MAP_HOME.mapX}, ${CHAPTER_MAP_HOME.mapY})`}
-            onClick={() => setSelectedId("home")}
+            onClick={() => setSelectedId(isHomeSelected ? null : "home")}
           >
             {isHomeSelected && <circle r="34" className="chapter-map__city-ring" />}
             <circle r="26" className="chapter-map__city-bg" />
@@ -178,7 +240,7 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
 
           {CHAPTERS.map((chapter) => {
             const unlocked = chapterUnlocked(state, chapter);
-            const isSelected = selected.id === chapter.id && !isHomeSelected;
+            const isSelected = selectedChapter?.id === chapter.id;
             const chapterAffordable = canUnlockChapter(state, chapter);
             return (
               <g
@@ -194,7 +256,7 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
                     : undefined
                 }
                 transform={`translate(${chapter.mapX}, ${chapter.mapY})`}
-                onClick={() => setSelectedId(chapter.id)}
+                onClick={() => setSelectedId(isSelected ? null : chapter.id)}
               >
                 {isSelected && <circle r="34" className="chapter-map__city-ring" />}
                 <circle r="26" className="chapter-map__city-bg" />
@@ -239,13 +301,20 @@ export function ChaptersTab({ state, onUnlock }: ChaptersTabProps) {
             {
               left: popoverPos?.left ?? 0,
               top: popoverPos?.top ?? 0,
-              visibility: popoverPos ? "visible" : "hidden",
+              visibility: isOpen && popoverPos ? "visible" : "hidden",
               "--chapter-accent": isHomeSelected ? "var(--chrome)" : selected.accent,
               "--arrow-left": `${popoverPos?.arrowLeft ?? POPOVER_WIDTH / 2}px`,
             } as CSSProperties
           }
         >
           <div className="chapter-popover__arrow" />
+          <button
+            className="chapter-popover__close"
+            aria-label="Close"
+            onClick={() => setSelectedId(null)}
+          >
+            <CloseIcon />
+          </button>
           {isHomeSelected ? (
             <div className="chapter-popover__content">
               <div className="chapter-popover__patch">

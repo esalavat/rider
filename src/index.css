@@ -984,6 +984,34 @@ input {
   border-top: 8px solid var(--bg-panel);
 }
 
+.chapter-popover__close {
+  position: absolute;
+  top: -19px;
+  right: -19px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--bg-panel);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: var(--shadow-hard);
+  z-index: 2;
+}
+
+.chapter-popover--unlocked .chapter-popover__close {
+  border-color: var(--chapter-accent, var(--gold));
+}
+
+.chapter-popover__close svg {
+  width: 18px;
+  height: 18px;
+}
+
 .chapter-popover__patch {
   width: 40px;
   height: 40px;
