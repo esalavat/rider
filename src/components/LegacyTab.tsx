@@ -8,6 +8,7 @@ import {
 } from "../game/engine";
 import type { GameState, LegacyUpgradeDef } from "../game/types";
 import { SkullIcon } from "./icons";
+import { LegendProgress } from "./LegendProgress";
 
 interface LegacyTabProps {
   state: GameState;
@@ -61,6 +62,9 @@ export function LegacyTab({
           Cashing out now earns{" "}
           <strong>{formatNumber(pending)} Legend Points</strong>
         </div>
+        <div className="legacy-hero__progress">
+          <LegendProgress state={state} />
+        </div>
         <button
           className="prestige-btn"
           disabled={!eligible}
@@ -68,6 +72,13 @@ export function LegacyTab({
         >
           {eligible ? "Go Legendary" : "Earn more before retiring"}
         </button>
+      </div>
+
+      <div className="legacy-balance">
+        <SkullIcon className="legacy-balance__icon" />
+        <span>
+          <strong>{formatNumber(state.legendPoints)}</strong> Legend Points banked to spend below
+        </span>
       </div>
 
       <div className="legacy-list">

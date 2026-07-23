@@ -227,6 +227,73 @@ input {
   flex-shrink: 0;
 }
 
+.stat-pill__col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 64px;
+}
+
+.stat-pill--legend .stat-pill__col .stat-pill__value {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Legend Points progress indicator (Header pill + Legacy hero) */
+
+.legend-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.legend-progress__track {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-raised);
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.legend-progress--compact .legend-progress__track {
+  height: 4px;
+}
+
+.legend-progress__fill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.24s linear;
+}
+
+.legend-progress__fill--pulsing {
+  width: 100%;
+  animation: legend-progress-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes legend-progress-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.legend-progress__label {
+  font-size: 10px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend-progress--compact .legend-progress__label {
+  font-size: 9px;
+}
+
 /* Main / tabs */
 
 .app-main {
@@ -559,6 +626,11 @@ input {
   color: var(--gold);
 }
 
+.legacy-hero__progress {
+  width: 100%;
+  max-width: 220px;
+}
+
 .prestige-btn {
   background: var(--gold);
   color: var(--ink);
@@ -583,6 +655,27 @@ input {
   color: var(--text-dim);
   border-color: #333;
   box-shadow: none;
+}
+
+.legacy-balance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding: 0 4px;
+}
+
+.legacy-balance__icon {
+  width: 16px;
+  height: 16px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.legacy-balance strong {
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
 }
 
 .legacy-list {

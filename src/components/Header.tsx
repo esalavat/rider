@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { formatCash, formatNumber } from "../game/format";
-import { memberRank, totalIncomePerSecond, totalMembers } from "../game/engine";
+import {
+  legendPointsOnPrestige,
+  memberRank,
+  totalIncomePerSecond,
+  totalMembers,
+} from "../game/engine";
 import type { GameState } from "../game/types";
 import { PatchIcon, SkullIcon } from "./icons";
+import { LegendProgress } from "./LegendProgress";
 
 interface HeaderProps {
   state: GameState;
@@ -14,6 +20,7 @@ export function Header({ state, onRename, onLogoTap }: HeaderProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(state.clubName);
   const income = totalIncomePerSecond(state);
+  const pendingLegendPoints = legendPointsOnPrestige(state);
 
   const commit = () => {
     const trimmed = draft.trim();
@@ -67,11 +74,14 @@ export function Header({ state, onRename, onLogoTap }: HeaderProps) {
           <PatchIcon className="stat-pill__icon" />
           <span className="stat-pill__value">{formatNumber(totalMembers(state))}</span>
         </div>
-        <div className="stat-pill stat-pill--legend">
+        <div className="stat-pill stat-pill--legend" title="Legend Points you'd earn by going Legendary right now">
           <SkullIcon className="stat-pill__icon" />
-          <span className="stat-pill__value">
-            {formatNumber(state.legendPoints)}
-          </span>
+          <div className="stat-pill__col">
+            <span className="stat-pill__value">
+              {formatNumber(pendingLegendPoints)}
+            </span>
+            <LegendProgress state={state} compact />
+          </div>
         </div>
       </div>
     </header>

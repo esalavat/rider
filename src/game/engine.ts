@@ -410,6 +410,28 @@ export function canPrestige(state: GameState): boolean {
   return legendPointsOnPrestige(state) > 0;
 }
 
+/** Fraction (0-1) of the way from the current whole Legend Point to the next one. */
+export function legendPointsProgress(state: GameState): number {
+  const raw = Math.sqrt(state.cashEarnedThisRun / 1_000_000);
+  return raw - Math.floor(raw);
+}
+
+/** Estimated Legend Points/sec at the current income rate, assuming income holds steady. */
+export function legendPointsRatePerSecond(state: GameState): number {
+  const raw = Math.sqrt(state.cashEarnedThisRun / 1_000_000);
+  if (raw < 1e-6) return 0;
+  return totalIncomePerSecond(state) / (2_000_000 * raw);
+}
+
+/** Seconds until the next whole Legend Point at the current income rate. */
+export function secondsUntilNextLegendPoint(state: GameState): number {
+  const income = totalIncomePerSecond(state);
+  if (income <= 0) return Infinity;
+  const nextWhole = Math.floor(legendPointsOnPrestige(state)) + 1;
+  const cashNeeded = nextWhole * nextWhole * 1_000_000 - state.cashEarnedThisRun;
+  return Math.max(0, cashNeeded) / income;
+}
+
 export function startingCash(state: GameState): number {
   const nestEgg = LEGACY_UPGRADES.find((u) => u.id === "nest_egg")!;
   const level = legacyLevel(state, nestEgg);
