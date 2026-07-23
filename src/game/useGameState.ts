@@ -147,6 +147,19 @@ export function useGameState() {
 
   const dismissOfflineReport = useCallback(() => setOfflineReport(null), []);
 
+  // Dev-tools only, gated behind the hidden useDevMode toggle in App.tsx.
+  const addDevCash = useCallback((amount: number) => {
+    setState((prev) => applyIncome(prev, amount));
+  }, []);
+
+  const addDevLegend = useCallback((amount: number) => {
+    setState((prev) => ({ ...prev, legendPoints: prev.legendPoints + amount }));
+  }, []);
+
+  const skipDevTime = useCallback((seconds: number) => {
+    setState((prev) => applyOfflineProgress(prev, seconds).state);
+  }, []);
+
   return {
     state,
     offlineReport,
@@ -162,5 +175,8 @@ export function useGameState() {
     kickstart,
     renameClub,
     hardReset,
+    addDevCash,
+    addDevLegend,
+    skipDevTime,
   };
 }

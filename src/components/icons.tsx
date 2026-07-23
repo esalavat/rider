@@ -154,6 +154,22 @@ export function WrenchIcon({ className }: IconProps) {
   );
 }
 
+export function BugIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} {...base}>
+      <ellipse cx="24" cy="27" rx="10" ry="13" />
+      <circle cx="24" cy="10" r="3" />
+      <line x1="24" y1="14" x2="24" y2="40" />
+      <line x1="9" y1="19" x2="16" y2="23" />
+      <line x1="39" y1="19" x2="32" y2="23" />
+      <line x1="8" y1="27" x2="14" y2="27" />
+      <line x1="40" y1="27" x2="34" y2="27" />
+      <line x1="9" y1="35" x2="16" y2="31" />
+      <line x1="39" y1="35" x2="32" y2="31" />
+    </svg>
+  );
+}
+
 export function ThrottleIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 48 48" className={className} {...base}>

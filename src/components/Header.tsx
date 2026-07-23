@@ -7,9 +7,10 @@ import { PatchIcon, SkullIcon } from "./icons";
 interface HeaderProps {
   state: GameState;
   onRename: (name: string) => void;
+  onLogoTap?: () => void;
 }
 
-export function Header({ state, onRename }: HeaderProps) {
+export function Header({ state, onRename, onLogoTap }: HeaderProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(state.clubName);
   const income = totalIncomePerSecond(state);
@@ -23,7 +24,9 @@ export function Header({ state, onRename }: HeaderProps) {
   return (
     <header className="app-header">
       <div className="app-header__brand">
-        <span className="app-header__logo">RIDER</span>
+        <span className="app-header__logo" onClick={onLogoTap}>
+          RIDER
+        </span>
         <span className="app-header__tagline">Idle MC Empire</span>
       </div>
 

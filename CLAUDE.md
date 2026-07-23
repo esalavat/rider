@@ -39,12 +39,16 @@ src/game/
                     (requestAnimationFrame, throttled to 4/s — do not remove the
                     throttle, see GAME_DESIGN.md), autosave, offline progress on load,
                     wraps every engine.ts action as a component-facing callback
+  useDevMode.ts    — hidden dev-tools toggle (tap the header logo 7x), stored under
+                    its own localStorage key, separate from the save
 
 src/components/
   App.tsx (at src root) — tab shell wiring useGameState to the active tab
   Header.tsx, TabNav.tsx, WelcomeBackModal.tsx — chrome shared across tabs
   RacketsTab.tsx, RecruitsTab.tsx, ChaptersTab.tsx, LegacyTab.tsx — one per tab,
     each maps over an array from data.ts rather than hardcoding items
+  DevPanel.tsx       — hidden 5th tab (see useDevMode.ts above): skip time, grant
+                        cash/Legend Points, for testing pacing without waiting
   icons.tsx          — every icon in the game, hand-coded flat-vector SVG
                         (viewBox 0 0 48 48, stroke=currentColor, no external assets)
 ```
