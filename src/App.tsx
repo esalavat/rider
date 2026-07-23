@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChaptersTab } from "./components/ChaptersTab";
 import { Header } from "./components/Header";
+import { ThrottleIcon } from "./components/icons";
 import { LegacyTab } from "./components/LegacyTab";
 import { RacketsTab } from "./components/RacketsTab";
 import { RecruitsTab } from "./components/RecruitsTab";
@@ -30,7 +31,17 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Header state={state} onRename={renameClub} />
+      <div className="app-sticky-top">
+        <Header state={state} onRename={renameClub} />
+        {tab === "rackets" && (
+          <div className="kickstart-bar">
+            <button className="kickstart-btn" onClick={kickstart}>
+              <ThrottleIcon className="kickstart-btn__icon" />
+              <span>Twist the Throttle</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       <main className="app-main">
         {tab === "rackets" && (
@@ -39,7 +50,6 @@ export default function App() {
             onBuy={buyRacket}
             onBuyMax={buyMaxRackets}
             onBuyMilestone={buyRacketMilestone}
-            onKickstart={kickstart}
           />
         )}
         {tab === "recruits" && (

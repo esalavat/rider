@@ -49,7 +49,7 @@ export function RecruitsTab({ state, onBuy, onBuyMax }: RecruitsTabProps) {
                   <div className="racket-card__top">
                     <span className="racket-card__name">{tier.name}</span>
                   </div>
-                  <p className="racket-card__flavor">
+                  <p className="racket-card__locked-hint">
                     {gatingChapter
                       ? `Charter ${gatingChapter.name} to unlock.`
                       : "Locked."}

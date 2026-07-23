@@ -72,6 +72,12 @@ input {
 
 /* Header */
 
+.app-sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 .app-header {
   display: flex;
   flex-wrap: wrap;
@@ -80,9 +86,18 @@ input {
   padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
   background: var(--bg-panel);
   border-bottom: 3px solid var(--ink);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+}
+
+.kickstart-bar {
+  background: var(--bg-panel);
+  border-bottom: 3px solid var(--ink);
+  padding: 10px 12px;
+}
+
+.kickstart-bar .kickstart-btn {
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .app-header__brand {
@@ -288,11 +303,18 @@ input {
 }
 
 .racket-card--locked {
-  opacity: 0.5;
+  opacity: 0.85;
 }
 
 .racket-card--locked .racket-card__icon {
   color: var(--text-dim);
+}
+
+.racket-card__locked-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
 }
 
 .racket-card__icon {

@@ -12,14 +12,13 @@ import {
   racketOwned,
 } from "../game/engine";
 import type { GameState, RacketDef } from "../game/types";
-import { RacketIcon, ThrottleIcon } from "./icons";
+import { RacketIcon } from "./icons";
 
 interface RacketsTabProps {
   state: GameState;
   onBuy: (racket: RacketDef) => void;
   onBuyMax: (racket: RacketDef) => void;
   onBuyMilestone: (racket: RacketDef) => void;
-  onKickstart: () => void;
 }
 
 export function RacketsTab({
@@ -27,17 +26,11 @@ export function RacketsTab({
   onBuy,
   onBuyMax,
   onBuyMilestone,
-  onKickstart,
 }: RacketsTabProps) {
   const multiplier = globalMultiplier(state);
 
   return (
     <div className="tab-panel">
-      <button className="kickstart-btn" onClick={onKickstart}>
-        <ThrottleIcon className="kickstart-btn__icon" />
-        <span>Twist the Throttle</span>
-      </button>
-
       <div className="racket-list">
         {RACKETS.map((racket) => {
           const unlocked = racketIsUnlocked(state, racket);
