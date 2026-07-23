@@ -139,7 +139,7 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
   },
 ];
 
-export const MEMBER_INCOME_BONUS = 0.008;
+export const MEMBER_INCOME_BONUS = 0.004;
 export const MEMBER_AUTO_RATE = 0.1;
 export const CLICK_BONUS_FLOOR = 2;
 export const CLICK_BONUS_INCOME_SHARE = 0.15;
@@ -162,7 +162,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Earned the colors. Brings in prospects on their own.",
     icon: "patch",
     baseCost: 2000,
-    costGrowth: 1.22,
+    costGrowth: 1.35,
     weight: 20,
   },
   {
@@ -171,7 +171,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Runs the recruiting routes, chapter to chapter.",
     icon: "officer",
     baseCost: 100000,
-    costGrowth: 1.23,
+    costGrowth: 1.36,
     weight: 400,
   },
   {
@@ -180,7 +180,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Keeps the peace, keeps the ranks growing.",
     icon: "officer",
     baseCost: 6000000,
-    costGrowth: 1.24,
+    costGrowth: 1.37,
     weight: 8000,
   },
   {
@@ -189,7 +189,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Second in command, building the bench.",
     icon: "officer",
     baseCost: 400000000,
-    costGrowth: 1.25,
+    costGrowth: 1.38,
     weight: 160000,
   },
   {
@@ -198,7 +198,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "Runs the chapter. Every rider answers to them.",
     icon: "officer",
     baseCost: 32000000000,
-    costGrowth: 1.26,
+    costGrowth: 1.39,
     weight: 3200000,
   },
   {
@@ -207,7 +207,7 @@ export const MEMBER_TIERS: MemberTierDef[] = [
     flavor: "The name on every chapter's charter.",
     icon: "officer",
     baseCost: 3000000000000,
-    costGrowth: 1.27,
+    costGrowth: 1.40,
     weight: 64000000,
   },
 ];
@@ -251,7 +251,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Desert Southwest",
     flavor: "Flat, white, and endless. Built for opening the throttle.",
     bikeName: "Salt Flats Chopper",
-    unlockCost: 300,
+    unlockCost: 3000,
     bonus: 0.05,
     accent: "#e4b243",
     patch: "sun",
@@ -265,7 +265,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Pacific Northwest",
     flavor: "Switchbacks through the timber, rain or shine.",
     bikeName: "Pine Ridge Enduro",
-    unlockCost: 4000,
+    unlockCost: 60000,
     bonus: 0.05,
     accent: "#5a8a5a",
     patch: "pine",
@@ -279,7 +279,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Deep South",
     flavor: "Humid nights, slow water, and a clubhouse on stilts.",
     bikeName: "Bayou Crossing Cruiser",
-    unlockCost: 70000,
+    unlockCost: 1500000,
     bonus: 0.05,
     accent: "#4a8a94",
     patch: "moon",
@@ -293,7 +293,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Southwest Mesa",
     flavor: "Switchback roads carved into red rock.",
     bikeName: "Copper Canyon Scrambler",
-    unlockCost: 1500000,
+    unlockCost: 45000000,
     bonus: 0.05,
     accent: "#b5651d",
     patch: "mesa",
@@ -307,7 +307,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Coastal Port",
     flavor: "Shipping cranes and salt air. Freight moves both ways.",
     bikeName: "Steel Harbor Cafe Racer",
-    unlockCost: 40000000,
+    unlockCost: 1575000000,
     bonus: 0.05,
     accent: "#7d8c99",
     patch: "anchor",
@@ -321,7 +321,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "High Desert Badlands",
     flavor: "Scorched earth and open highway to the horizon.",
     bikeName: "Wildfire Mesa Streetfighter",
-    unlockCost: 1200000000,
+    unlockCost: 63000000000,
     bonus: 0.2,
     accent: "#a3222b",
     patch: "flame",
@@ -334,7 +334,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "National Chapter",
     flavor: "Where it all started. Every road leads back here.",
     bikeName: "Vulture's Rest Road King",
-    unlockCost: 50000000000,
+    unlockCost: 3150000000000,
     bonus: 0.3,
     accent: "#8a5aa0",
     patch: "wings",
