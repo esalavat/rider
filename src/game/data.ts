@@ -154,13 +154,23 @@ export const MEMBER_INCOME_BONUS = 0.008;
  * that threshold, log-throttling all recruit income the moment that tier
  * unlocked (around Chapter 3) — recruits stopped mattering almost
  * immediately, well before they should have, causing a real dead-end at
- * Chapter 4 in playtesting. Raised 10,000x so tiers 1-4 (weight 1-8,000)
- * have room to be bought in the hundreds/thousands — matching how the game
- * actually played when progression felt good — while still backstopping
- * truly extreme windfalls at the highest tiers (Chapter President and
- * National President, weight 3.2M/64M, still hit this fast).
+ * Chapter 4. Raised 10,000x to 2,000,000 to fix that — but 2,000,000 turned
+ * out to overcorrect: Vice President's weight (160,000) sits comfortably
+ * under it too, so once Pine Ridge unlocked Sergeant, a single sustained
+ * idle stretch could push raw weight from Sergeant *and* Vice President
+ * alike all the way to the cap with zero throttling, spiking the multiplier
+ * enough to buy Chapters 4-6 in one windfall — the exact one-tier-early
+ * runaway this cap was built to prevent, just resurfacing one tier later.
+ * Lowered to 500,000: still generous for tiers 1-3 (Prospect/Patched/Road
+ * Captain, weight 1-400, hundreds-to-thousands of headroom), Sergeant
+ * (weight 8,000) still gets a few dozen units before throttling, but Vice
+ * President (weight 160,000) now hits the log climb within single-digit
+ * units instead of dozens — Chapter President and National President
+ * (weight 3.2M/64M) were already so far past any reasonable cap that they
+ * were never the problem and are unaffected. See the Chapters section in
+ * GAME_DESIGN.md for the matching Bayou Crossing repricing this went with.
  */
-export const MEMBER_WEIGHT_SOFT_CAP = 2000000;
+export const MEMBER_WEIGHT_SOFT_CAP = 500000;
 export const MEMBER_AUTO_RATE = 0.1;
 export const CLICK_BONUS_FLOOR = 2;
 export const CLICK_BONUS_INCOME_SHARE = 0.15;
@@ -300,7 +310,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Deep South",
     flavor: "Humid nights, slow water, and a clubhouse on stilts.",
     bikeName: "Bayou Crossing Cruiser",
-    unlockCost: 200000,
+    unlockCost: 1200000,
     bonus: 0.05,
     accent: "#4a8a94",
     patch: "moon",
@@ -314,7 +324,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Southwest Mesa",
     flavor: "Switchback roads carved into red rock.",
     bikeName: "Copper Canyon Scrambler",
-    unlockCost: 500000,
+    unlockCost: 1500000,
     bonus: 0.05,
     accent: "#b5651d",
     patch: "mesa",
@@ -328,7 +338,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Coastal Port",
     flavor: "Shipping cranes and salt air. Freight moves both ways.",
     bikeName: "Steel Harbor Cafe Racer",
-    unlockCost: 1200000,
+    unlockCost: 2000000,
     bonus: 0.05,
     accent: "#7d8c99",
     patch: "anchor",
