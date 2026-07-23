@@ -95,7 +95,7 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
     valuePerLevel: 0.1,
     baseCost: 1,
     costGrowth: 1.35,
-    maxLevel: 55,
+    maxLevel: 200,
   },
   {
     id: "reputation",
@@ -115,7 +115,7 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
     valuePerLevel: 0.18,
     baseCost: 3,
     costGrowth: 1.45,
-    maxLevel: 24,
+    maxLevel: 100,
   },
   {
     id: "nest_egg",
@@ -125,7 +125,7 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
     valuePerLevel: 2500,
     baseCost: 2,
     costGrowth: 1.3,
-    maxLevel: 34,
+    maxLevel: 60,
   },
   {
     id: "throttle_grip",
@@ -135,7 +135,7 @@ export const LEGACY_UPGRADES: LegacyUpgradeDef[] = [
     valuePerLevel: 0.15,
     baseCost: 1,
     costGrowth: 1.3,
-    maxLevel: 34,
+    maxLevel: 60,
   },
 ];
 
@@ -148,8 +148,19 @@ export const MEMBER_INCOME_BONUS = 0.008;
  * amount of cash can push the multiplier past a slow logarithmic climb once
  * raw weight crosses this threshold, so cost curves no longer have to do
  * all the anti-runaway work by themselves.
+ *
+ * This was originally 200, which sounded conservative but wasn't: Sergeant
+ * at Arms alone has weight 8,000, so owning even a single one blew 40x past
+ * that threshold, log-throttling all recruit income the moment that tier
+ * unlocked (around Chapter 3) — recruits stopped mattering almost
+ * immediately, well before they should have, causing a real dead-end at
+ * Chapter 4 in playtesting. Raised 10,000x so tiers 1-4 (weight 1-8,000)
+ * have room to be bought in the hundreds/thousands — matching how the game
+ * actually played when progression felt good — while still backstopping
+ * truly extreme windfalls at the highest tiers (Chapter President and
+ * National President, weight 3.2M/64M, still hit this fast).
  */
-export const MEMBER_WEIGHT_SOFT_CAP = 200;
+export const MEMBER_WEIGHT_SOFT_CAP = 2000000;
 export const MEMBER_AUTO_RATE = 0.1;
 export const CLICK_BONUS_FLOOR = 2;
 export const CLICK_BONUS_INCOME_SHARE = 0.15;
@@ -289,7 +300,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Deep South",
     flavor: "Humid nights, slow water, and a clubhouse on stilts.",
     bikeName: "Bayou Crossing Cruiser",
-    unlockCost: 1500000,
+    unlockCost: 200000,
     bonus: 0.05,
     accent: "#4a8a94",
     patch: "moon",
@@ -303,7 +314,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Southwest Mesa",
     flavor: "Switchback roads carved into red rock.",
     bikeName: "Copper Canyon Scrambler",
-    unlockCost: 45000000,
+    unlockCost: 500000,
     bonus: 0.05,
     accent: "#b5651d",
     patch: "mesa",
@@ -317,7 +328,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "Coastal Port",
     flavor: "Shipping cranes and salt air. Freight moves both ways.",
     bikeName: "Steel Harbor Cafe Racer",
-    unlockCost: 1575000000,
+    unlockCost: 1200000,
     bonus: 0.05,
     accent: "#7d8c99",
     patch: "anchor",
@@ -331,7 +342,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "High Desert Badlands",
     flavor: "Scorched earth and open highway to the horizon.",
     bikeName: "Wildfire Mesa Streetfighter",
-    unlockCost: 63000000000,
+    unlockCost: 3000000,
     bonus: 0.2,
     accent: "#a3222b",
     patch: "flame",
@@ -344,7 +355,7 @@ export const CHAPTERS: ChapterDef[] = [
     region: "National Chapter",
     flavor: "Where it all started. Every road leads back here.",
     bikeName: "Vulture's Rest Road King",
-    unlockCost: 3150000000000,
+    unlockCost: 7500000,
     bonus: 0.3,
     accent: "#8a5aa0",
     patch: "wings",

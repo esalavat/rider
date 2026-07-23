@@ -103,16 +103,23 @@ First fix attempt: raised gated-tier cost growth to 1.22–1.27 and cut `MEMBER_
 
 #### Structural fix: logarithmic soft cap on member weight
 
-Two rounds of pushing cost growth and `MEMBER_INCOME_BONUS` in the same direction was a sign those constants were fighting a losing battle: `memberMultiplier` was **linear** in raw weight (`Σ owned_i × weight_i`), so no matter how steep the cost curve got, a big enough cash windfall reinvested into a newly-unlocked high-weight tier could always eventually buy enough units to spike the multiplier — cost curves only changed *how much* cash it took, never capped the payoff itself. The actual fix: `effectiveMemberWeight()` in `engine.ts` now applies a **soft cap** to the raw sum — linear and completely unchanged below `MEMBER_WEIGHT_SOFT_CAP` (200), logarithmic above it:
+Two rounds of pushing cost growth and `MEMBER_INCOME_BONUS` in the same direction was a sign those constants were fighting a losing battle: `memberMultiplier` was **linear** in raw weight (`Σ owned_i × weight_i`), so no matter how steep the cost curve got, a big enough cash windfall reinvested into a newly-unlocked high-weight tier could always eventually buy enough units to spike the multiplier — cost curves only changed *how much* cash it took, never capped the payoff itself. The actual fix: `effectiveMemberWeight()` in `engine.ts` applies a **soft cap** to the raw sum — linear and completely unchanged below `MEMBER_WEIGHT_SOFT_CAP`, logarithmic above it:
 
 ```
-raw ≤ 200:  effectiveWeight = raw                                    (unchanged)
-raw > 200:  effectiveWeight = 200 + 200 × ln(1 + (raw − 200) / 200)   (soft cap)
+raw ≤ CAP:  effectiveWeight = raw                              (unchanged)
+raw > CAP:  effectiveWeight = CAP + CAP × ln(1 + (raw − CAP) / CAP)   (soft cap)
 ```
 
-Below the cap, behavior is byte-for-byte identical to the old linear formula, so the validated-good pre-Chapter-1 pacing (raw weight from Prospects alone rarely exceeds ~200 in a single ~10-minute run, since prestige resets member counts) is untouched. Above it, each additional unit of weight buys a rapidly shrinking sliver of effective weight: at raw weight 5,000 the multiplier reaches only ~7.8x instead of the old uncapped ~101x; at raw weight 1,000,000 (an absurd burst-buy) it's ~16.2x instead of ~20,001x. This is what actually stops the "cash windfall → buy a pile of the newly-unlocked tier → multiplier spikes → even more cash" loop, regardless of cost curve — no amount of cash can push effective weight past a slow logarithmic climb.
+With the soft cap doing the structural work, gated-tier cost growth and `MEMBER_INCOME_BONUS` were rolled back from their round-two panic-tuned values (1.35–1.40 / 0.004) to round-one's more modest ones (1.22–1.27 / 0.008).
 
-With the soft cap now doing the structural work, gated-tier cost growth and `MEMBER_INCOME_BONUS` were rolled back from their round-two panic-tuned values (1.35–1.40 / 0.004) to round-one's more modest ones (1.22–1.27 / 0.008) — the soft cap should no longer need help from such extreme constants. Chapter costs (see the Chapters section) were left at their round-two values as a conservative buffer, since they're a partially independent lever (total LP *threshold*, not earn *rate*) serving the separate, explicit design goal of a long late game — if they now feel too slow given the tamed economy, that's a much better problem to have than a third "still too fast" report, and an easy one to fix by lowering them.
+**First soft-cap value (200) was itself miscalibrated — a real progression dead-end at Chapter 4.** Playtesting through Chapters 1-3 felt genuinely good (a satisfying, accelerating ramp: ~20-30 min, +20 min, +~1 hour). But Chapter 4 (1,500,000 LP at the time) then took **over 24 hours**, requiring dev tools to even reach — not "slow," a wall. Root cause: `MEMBER_WEIGHT_SOFT_CAP` was set to 200, but Sergeant at Arms alone has weight 8,000 — owning a *single one* already blows 40x past that threshold. In practice this meant recruit income had been fully log-throttled since right around Chapter 3, the moment Sergeant at Arms first became ownable; by Chapter 4, buying more recruits of any tier had already stopped mattering, and the player's only remaining lever was raw racket income, which itself plateaus once milestones are maxed and each racket has been bought a reasonable number of times. With every legacy upgrade already maxed out too (their old max levels — 55/25/20/30/30 — turned out to be reachable well before Chapter 4), there was **nothing left to invest LP or cash into that moved the needle** — the only way forward was literally waiting.
+
+Fixed three ways together:
+1. **`MEMBER_WEIGHT_SOFT_CAP` raised 10,000x, from 200 to 2,000,000.** Sized so tiers 1-4 (Prospect/Patched/Road Captain/Sergeant, weight 1-8,000) can be bought in the hundreds or thousands with full linear scaling — matching how the game actually played when it felt good — while Chapter President and National President (weight 3.2M/64M) still hit the cap fast, keeping it as a backstop against truly extreme windfalls at the very top end rather than a routine mid-game brake. A single flat threshold can't be perfectly calibrated across 8 orders of magnitude of tier weight, so this is a deliberate trade-off: generous through the first ~4-5 tiers, tighter again at the top two.
+2. **Legacy upgrade max levels raised substantially** (Chrome Plating 55→200, Road Captain's Network 24→100, Nest Egg 34→60, Throttle Grip 34→60; Street Reputation left at 25, since its −3%/level is already floored at 20% of original cost by then and more levels would do nothing) — so there's *always* more to invest in beyond recruits and chapters, addressing the "nothing else to boost production" complaint directly rather than just fixing the cap.
+3. **Chapter costs for 4-8 softened dramatically**, from a 20-50x-per-step accelerating curve down to a much gentler, roughly-constant ~2.5x-per-step curve — see the Chapters section. Chapters 1-3 (30 / 3,000 / 60,000 LP) are unchanged; they're validated good across multiple rounds of real play.
+
+This is the fourth pacing-tuning pass in a row. If Chapter 4+ is *still* a wall after this, don't reach for a fifth round of the same three levers — the more likely culprit at that point is that a single global soft-cap threshold genuinely can't serve both "prevent early-tier runaway" and "keep late-tier accumulation meaningful" at the same time, and a per-tier or dynamically-scaled cap (rather than one flat number for all 7 tiers) is probably the right next design, alongside actually watching a real playthrough tick-by-tick around the point it stalls rather than reasoning about it from constants alone.
 
 ### Legacy / Prestige ("Go Legendary")
 
@@ -125,11 +132,13 @@ Legacy upgrades (bought with Legend Points, cost = `baseCost * costGrowth^level`
 
 | Upgrade | Effect | Value/level | Base cost | Growth | Max level |
 |---|---|---|---|---|---|
-| Chrome Plating | +income | 10% | 1 | 1.35 | 50 |
+| Chrome Plating | +income | 10% | 1 | 1.35 | 200 |
 | Street Reputation | −recruit cost | 3% (floor 20% of original) | 1 | 1.4 | 25 |
-| Road Captain's Network | +income | 18% | 3 | 1.45 | 20 |
-| Nest Egg | +starting cash | $2,500 | 2 | 1.3 | 30 |
-| Throttle Grip | +throttle click bonus | 15% | 1 | 1.3 | 30 |
+| Road Captain's Network | +income | 18% | 3 | 1.45 | 100 |
+| Nest Egg | +starting cash | $2,500 | 2 | 1.3 | 60 |
+| Throttle Grip | +throttle click bonus | 15% | 1 | 1.3 | 60 |
+
+Max levels for Chrome Plating/Road Captain's Network/Nest Egg/Throttle Grip were raised substantially (from 50/20/30/30) after real playtesting showed all four maxed out well before Chapter 4, leaving nothing left to invest LP into except chapters — see "Structural fix" under the Members section above. Street Reputation's max level (25) is unchanged and deliberately not raised: its −3%/level is already floored at 20% of the original recruit cost by around level 27, so additional levels beyond that would be pure dead weight.
 
 ### Chapters (progression map)
 
@@ -140,13 +149,13 @@ Legacy upgrades (bought with Legend Points, cost = `baseCost * costGrowth^level`
 | 1 | Rust Hollow | Rust Belt | Patched Member | 30 | — | +5% | gear | `#d9662b` (rust) |
 | 2 | Salt Flats | Desert Southwest | Road Captain | 3,000 | 100x | +5% | sun | `#e4b243` (gold) |
 | 3 | Pine Ridge | Pacific Northwest | Sergeant at Arms | 60,000 | 20x | +5% | pine | `#5a8a5a` |
-| 4 | Bayou Crossing | Deep South | Vice President | 1,500,000 | 25x | +5% | moon | `#4a8a94` |
-| 5 | Copper Canyon | Southwest Mesa | Chapter President | 45,000,000 | 30x | +5% | mesa | `#b5651d` |
-| 6 | Steel Harbor | Coastal Port | National President | 1,575,000,000 | 35x | +5% | anchor | `#7d8c99` |
-| 7 | Wildfire Mesa | High Desert Badlands | — (income only) | 63,000,000,000 | 40x | +20% | flame | `#a3222b` (blood) |
-| 8 | Vulture's Rest | National Chapter | — (income only) | 3,150,000,000,000 | 50x | +30% | wings | `#8a5aa0` |
+| 4 | Bayou Crossing | Deep South | Vice President | 200,000 | 3.3x | +5% | moon | `#4a8a94` |
+| 5 | Copper Canyon | Southwest Mesa | Chapter President | 500,000 | 2.5x | +5% | mesa | `#b5651d` |
+| 6 | Steel Harbor | Coastal Port | National President | 1,200,000 | 2.4x | +5% | anchor | `#7d8c99` |
+| 7 | Wildfire Mesa | High Desert Badlands | — (income only) | 3,000,000 | 2.5x | +20% | flame | `#a3222b` (blood) |
+| 8 | Vulture's Rest | National Chapter | — (income only) | 7,500,000 | 2.5x | +30% | wings | `#8a5aa0` |
 
-**Third-pass numbers, revised twice after real playtesting** (earlier passes — a flat ~6-8x curve topping out at 5,000,000 LP, then an accelerating-but-still-too-soft 10x/13x/17x/21x/27x/30x/42x curve topping out at 50,000,000,000 — are preserved in git history). Round two confirmed the pre-Chapter-1 pacing was solid (two ~10-minute prestiges to reach Chapter 1's cost, matching the ~20-30 min target), but Chapter 2 still fell in "only a few minutes" once Patched Member was live — the income explosion the moment a chapter unlocks a new tier was still far stronger than the cost curve accounted for. Fixed by pushing both levers further at once: the member-economy fix above (steeper gated-tier cost growth, lower `MEMBER_INCOME_BONUS`) slows the income explosion itself, and this cost curve jumped specifically hard at the Chapter 1→2 step (100x, vs. the previous pass's 10x) since that's the confirmed problem point, then keeps **accelerating** through the rest (20x, 25x, 30x, 35x, 40x, 50x) so the game keeps getting harder to advance in at a compounding rate. Design goal unchanged: Chapter 1 as a slow, earned ~20-30-minute achievement; Chapter 2 costing meaningfully more on top of that; later chapters requiring the player to leave the game running and check back hours or a day later. Chapters 7-8 keep their raised +20%/+30% bonus (up from the old flat +5%/+10%) so they still feel worth their cost. **Still not validated against a full real playthrough past Chapter 2** — if Chapter 3 onward also turns out too fast, don't reach for a fourth cost-curve pass; per the note in the Members section above, that's the signal to look at a structural fix instead (e.g. diminishing returns on `memberMultiplier` at high owned counts).
+**Fourth-pass numbers.** Chapters 1-3 (30 / 3,000 / 60,000 LP, ratios 100x then 20x) are unchanged and validated good across multiple rounds of real play — a satisfying ~20-30 min, then +20 min, then +~1 hour. Chapters 4-8 used to keep **accelerating** (25x, 30x, 35x, 40x, 50x, topping out at 3,150,000,000,000 LP) on the theory that the game should keep getting harder to advance in at a compounding rate. In practice this produced a real wall: Chapter 4 took **over 24 hours** and needed dev tools to even reach, because the member-weight soft cap (see "Structural fix" above) had — independently — already throttled recruit income to near-zero growth by that point, so there was no realistic way to out-earn a 25x-and-climbing cost ratio. Both problems are fixed together: the soft-cap threshold fix restores meaningful recruit scaling much further into the game, and this curve was changed from *accelerating* to roughly **constant** (~2.4-3.3x per step, closer to the "each chapter roughly doubles the time" pacing actually requested) — gentler than before by a wide margin, but still requiring real sustained investment, not a five-minute clear. Total LP to charter all 8 is now ~12.5M, down from ~3.15T. Chapters 7-8 keep their raised +20%/+30% bonus (up from the old flat +5%/+10%) so they still feel worth their cost. **This is the fourth pacing-tuning pass in a row** — if Chapter 4+ is still a wall after this, the next move shouldn't be a fifth round of the same numeric levers; see the "if a fifth round is needed" note under "Structural fix" above.
 
 All 8 chartered = permanent +75% global income, on top of unlocking the full Member tier chain.
 
