@@ -2,6 +2,7 @@ import { useState } from "react";
 import { formatCash, formatNumber } from "../game/format";
 import {
   legendPointsOnPrestige,
+  memberMultiplier,
   memberRank,
   totalIncomePerSecond,
   totalMembers,
@@ -21,6 +22,7 @@ export function Header({ state, onRename, onLogoTap }: HeaderProps) {
   const [draft, setDraft] = useState(state.clubName);
   const income = totalIncomePerSecond(state);
   const pendingLegendPoints = legendPointsOnPrestige(state);
+  const memberBonusPct = (memberMultiplier(state) - 1) * 100;
 
   const commit = () => {
     const trimmed = draft.trim();
@@ -70,9 +72,14 @@ export function Header({ state, onRename, onLogoTap }: HeaderProps) {
             +{formatCash(income)}/s
           </span>
         </div>
-        <div className="stat-pill">
+        <div className="stat-pill" title="Bonus to racket income from your recruits">
           <PatchIcon className="stat-pill__icon" />
-          <span className="stat-pill__value">{formatNumber(totalMembers(state))}</span>
+          <div className="stat-pill__col">
+            <span className="stat-pill__value">{formatNumber(totalMembers(state))}</span>
+            <span className="stat-pill__label">
+              +{memberBonusPct.toFixed(0)}% income
+            </span>
+          </div>
         </div>
         <div className="stat-pill stat-pill--legend" title="Legend Points you'd earn by going Legendary right now">
           <SkullIcon className="stat-pill__icon" />

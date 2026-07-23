@@ -44,8 +44,8 @@ export function LegendProgress({ state, compact = false }: LegendProgressProps) 
           ? `+${formatNumber(rate)}/s`
           : Number.isFinite(secondsToNext)
             ? compact
-              ? `~${shortEta(secondsToNext)}`
-              : `next Legend Point in ~${formatDuration(secondsToNext)}`
+              ? shortEta(secondsToNext)
+              : `next Legend Point in ${formatDuration(secondsToNext)}`
             : compact
               ? "–"
               : "earn cash to make progress"}
